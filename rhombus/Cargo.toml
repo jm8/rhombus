@@ -82,6 +82,7 @@ unic-langid = { version = "0.9.5", features = ["unic-langid-macros"] }
 unicode-segmentation = "1.12.0"
 urlencoding = "2.1.3"
 webpki-roots = { version = "0.26.6", optional = true }
+schemars = "0.8.21"
 
 [build-dependencies]
 rustc_version = "0.4.1"
