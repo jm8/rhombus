@@ -2,6 +2,7 @@ use super::{auth::MaybeUser, router::RouterState};
 use aide::{
     axum::{routing::get, IntoApiResponse},
     openapi::{Info, OpenApi},
+    redoc::Redoc,
 };
 use axum::{extract::State, Extension, Json};
 use schemars::JsonSchema;
@@ -33,7 +34,8 @@ pub fn build_api_router() -> axum::Router<RouterState> {
     let router = aide::axum::ApiRouter::new()
         .api_route("/", get(|| async { "Hello!".to_string() }))
         .api_route("/challenges", get(challenges_route))
-        .route("/api.json", get(serve_api));
+        .route("/openapi.json", get(serve_api))
+        .route("/docs", Redoc::new("/api/v1/openapi.json").axum_route());
 
     let mut api = OpenApi {
         info: Info {
