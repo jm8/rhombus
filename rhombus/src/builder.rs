@@ -25,6 +25,7 @@ use crate::{
     database_upload_provider::DatabaseUploadProvider,
     errors::{DatabaseConfigurationError, RhombusError},
     internal::{
+        api,
         auth::{
             auth_injector_middleware, enforce_admin_middleware, enforce_auth_middleware,
             route_signin, route_signin_credentials, route_signin_ctftime,
@@ -1063,6 +1064,7 @@ impl<P: Plugin + Send + Sync + 'static, U: UploadProvider + Send + Sync + 'stati
                 .route("/team/:id", get(route_public_team))
                 .route("/og-image.png", get(route_default_og_image))
                 .route("/robots.txt", get(route_robots_txt))
+                .nest("/api/v1", api::build_api_router())
                 .with_state(router_state.clone())
                 .merge(upload_router.layer(middleware::from_fn_with_state(
                     router_state.clone(),

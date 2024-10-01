@@ -1,3 +1,4 @@
+pub mod api;
 pub mod auth;
 pub mod command_palette;
 pub mod database;
