@@ -10,7 +10,7 @@ homepage = "https://rhombus.gg"
 keywords = ["web", "ctf", "http"]
 
 [dependencies]
-aide = { version = "0.13.4", features = ["axum"] }
+aide = { version = "0.13.4", features = ["axum", "redoc"] }
 argon2 = { version = "0.5.3", features = ["std"] }
 async-hash = "0.5.4"
 async-imap = { version = "0.10.1", default-features = false, features = [
