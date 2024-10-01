@@ -4596,6 +4596,7 @@ dependencies = [
  "rust-embed",
  "rust-s3",
  "rustc_version",
+ "schemars",
  "serde",
  "serde_json",
  "serenity",
