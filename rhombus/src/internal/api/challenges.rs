@@ -13,7 +13,7 @@ use schemars::JsonSchema;
 use serde::Serialize;
 
 #[derive(Debug, Serialize, JsonSchema, Clone)]
-struct ChallengePublic {
+struct Challenge {
     pub id: String,
     pub name: String,
     pub description: String,
@@ -21,6 +21,9 @@ struct ChallengePublic {
     pub author: String,
     pub ticket_template: Option<String>,
     pub files: Vec<ChallengeAttachment>,
+
+    pub flag: Option<String>,
+    pub healthscript: Option<String>,
 }
 
 #[derive(Debug, Serialize, JsonSchema, Clone)]
@@ -29,7 +32,7 @@ pub struct ChallengeAttachment {
     pub url: String,
 }
 
-impl ChallengePublic {
+impl Challenge {
     fn from(challenge: &provider::Challenge, data: &ChallengeData) -> Self {
         let category_id_to_name: BTreeMap<_, _> = data
             .categories
@@ -54,35 +57,15 @@ impl ChallengePublic {
                     url: attachment.url.clone(),
                 })
                 .collect(),
+            flag: None,
+            healthscript: None,
         }
     }
 }
 
 #[derive(Debug, Serialize, JsonSchema, Clone)]
-struct ChallengeAdmin {
-    pub id: String,
-    pub name: String,
-    pub description: String,
-    pub flag: String,
-    pub category: String,
-    pub author: String,
-    pub ticket_template: String,
-    pub points: String,
-    pub files: Vec<Attachment>,
-    pub healthscript: Option<String>,
-}
-
-#[derive(Debug, Serialize, JsonSchema, Clone)]
-#[serde(untagged)]
-enum Challenge {
-    Public(ChallengePublic),
-    Admin(ChallengeAdmin),
-}
-
-#[derive(Debug, Serialize, JsonSchema, Clone)]
 pub struct Attachment {
-    pub src: Option<String>,
-    pub url: Option<String>,
+    pub url: String,
     pub dst: String,
 }
 
@@ -93,7 +76,7 @@ pub async fn get_challenges(state: State<RouterState>) -> impl IntoApiResponse {
         challenges
             .challenges
             .iter()
-            .map(|challenge| Challenge::Public(ChallengePublic::from(challenge, &challenges)))
+            .map(|challenge| Challenge::from(challenge, &challenges))
             .collect::<Vec<_>>(),
     )
 }

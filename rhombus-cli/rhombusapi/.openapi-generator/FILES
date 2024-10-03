@@ -1,0 +1,16 @@
+.gitignore
+.openapi-generator-ignore
+.travis.yml
+Cargo.toml
+README.md
+docs/Challenge.md
+docs/ChallengeAttachment.md
+docs/DefaultApi.md
+git_push.sh
+src/apis/configuration.rs
+src/apis/default_api.rs
+src/apis/mod.rs
+src/lib.rs
+src/models/challenge.rs
+src/models/challenge_attachment.rs
+src/models/mod.rs

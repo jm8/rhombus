@@ -1,6 +1,9 @@
-use std::path::PathBuf;
-
 use clap::{Parser, Subcommand};
+use rhombus_api_client::apis::{
+    configuration::{self, Configuration},
+    default_api::challenges_get,
+};
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -30,7 +33,8 @@ enum Commands {
     },
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let cli = Cli::parse();
 
     // You can check the value provided by positional arguments, or option arguments
@@ -64,5 +68,11 @@ fn main() {
         None => {}
     }
 
-    // Continued program logic goes here...
+    let configuration = Configuration {
+        base_path: "http://localhost:3000/api/v1".to_string(),
+        ..Default::default()
+    };
+    let challenges = challenges_get(&configuration).await;
+
+    println!("{:?}", challenges);
 }

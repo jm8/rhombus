@@ -3,12 +3,17 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     utils.url = "github:numtide/flake-utils";
     rust-overlay.url = "github:oxalica/rust-overlay";
+    paperclip-src = {
+      url = "github:paperclip-rs/paperclip";
+      flake = false;
+    };
   };
 
   outputs = {
     nixpkgs,
     utils,
     rust-overlay,
+    paperclip-src,
     ...
   }:
     utils.lib.eachDefaultSystem (
@@ -36,6 +41,13 @@
           cargoLock.lockFile = ./Cargo.lock;
         };
 
+        packages.paperclip = pkgs.rustPlatform.buildRustPackage {
+          pname = "paperclip";
+          version = "0.1.0";
+          src = paperclip-src;
+          cargoHash = "";
+        };
+
         apps.rhombus-cli = {
           type = "app";
           program = "${packages.rhombus-cli}/bin/rhombus-cli";
@@ -60,7 +72,7 @@
             sqlite
             mold
             go-task
-            tailwindcss
+            # tailwindcss
             cargo-watch
             systemfd
             rust-toolchain
