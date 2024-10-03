@@ -1,10 +1,6 @@
 [package]
 name = "rhombus-api-client"
 version = "0.1.0"
-authors = ["OpenAPI Generator team and contributors"]
-description = "an example API"
-# Override this license by providing a License Object in the OpenAPI.
-license = "Unlicense"
 edition = "2021"
 
 [dependencies]
