@@ -23,7 +23,8 @@ pub fn build_api_router() -> axum::Router<RouterState> {
 
     let mut api = OpenApi {
         info: Info {
-            description: Some("an example API".to_string()),
+            title: "rhombus_api".to_string(),
+            version: "0.1.0".to_string(),
             ..Info::default()
         },
         ..OpenApi::default()

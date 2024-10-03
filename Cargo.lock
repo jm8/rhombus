@@ -4592,15 +4592,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rhombus-"
-version = "0.1.0"
-dependencies = [
- "clap",
- "rhombus-api-client",
- "tokio",
-]
-
-[[package]]
 name = "rhombus-api-client"
 version = "0.1.0"
 dependencies = [
@@ -4611,6 +4602,15 @@ dependencies = [
  "serde_with",
  "url",
  "uuid",
+]
+
+[[package]]
+name = "rhombus-cli"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "rhombus-api-client",
+ "tokio",
 ]
 
 [[package]]
