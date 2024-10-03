@@ -5,12 +5,13 @@ use aide::{
     axum::{routing::get, IntoApiResponse},
     openapi::{Info, OpenApi},
     redoc::Redoc,
+    NoApi,
 };
 use axum::{Extension, Json};
 use challenges::get_challenges;
 
 async fn serve_api(Extension(api): Extension<OpenApi>) -> impl IntoApiResponse {
-    Json(api)
+    NoApi(Json(api))
 }
 
 pub fn build_api_router() -> axum::Router<RouterState> {

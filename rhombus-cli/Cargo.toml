@@ -1,5 +1,5 @@
 [package]
-name = "rhombus-cli"
+name = "rhombus-"
 version = "0.1.0"
 edition = "2021"
 description = "Official CLI tool to interact with the Rhombus CTF framework."
@@ -11,3 +11,5 @@ keywords = ["ctf", "cli"]
 
 [dependencies]
 clap = { version = "4.5.17", features = ["derive"] }
+rhombus-api-client = { path = "./rhombusapi" }
+tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread"] }
