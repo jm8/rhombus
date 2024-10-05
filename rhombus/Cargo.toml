@@ -55,6 +55,7 @@ rust-embed = "8.5.0"
 rust-s3 = { version = "0.35.1", default-features = false, features = [
   "tokio-rustls-tls",
 ] }
+schemars = "0.8.21"
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
 serenity = { version = "0.12.2", features = ["chrono"] }
@@ -85,7 +86,6 @@ sqlx = { version = "0.8.2", optional = true, features = [
   "chrono",
   "macros",
 ] }
-schemars = "0.8.21"
 
 [build-dependencies]
 rustc_version = "0.4.1"
