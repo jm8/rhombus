@@ -1,10 +1,7 @@
 use std::collections::BTreeMap;
 
 use crate::internal::{
-    database::{
-        self,
-        provider::{self, ChallengeData},
-    },
+    database::provider::{self, ChallengeData},
     router::RouterState,
 };
 use aide::axum::IntoApiResponse;
@@ -30,6 +27,7 @@ struct Challenge {
 pub struct ChallengeAttachment {
     pub name: String,
     pub url: String,
+    pub hash: String,
 }
 
 impl Challenge {
@@ -55,6 +53,7 @@ impl Challenge {
                 .map(|attachment| ChallengeAttachment {
                     name: attachment.name.clone(),
                     url: attachment.url.clone(),
+                    hash: attachment.hash.clone(),
                 })
                 .collect(),
             flag: None,
