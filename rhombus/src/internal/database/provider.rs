@@ -44,6 +44,7 @@ pub struct ChallengeDivisionPoints {
 pub struct ChallengeAttachment {
     pub name: String,
     pub url: String,
+    pub hash: String,
 }
 
 #[derive(Debug, Serialize, Clone)]
