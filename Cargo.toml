@@ -6,5 +6,5 @@ members = [
     "examples/standalone",
     "examples/plugin",
     "examples/external-plugin",
-    "examples/demo",
+    "examples/demo", "challenge-loader",
 ]
