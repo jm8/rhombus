@@ -8,7 +8,7 @@ use aide::{
     NoApi,
 };
 use axum::{Extension, Json};
-use challenges::get_challenges;
+// use challenges::{get_challenges, get_challenges_diff};
 
 async fn serve_api(Extension(api): Extension<OpenApi>) -> impl IntoApiResponse {
     NoApi(Json(api))
@@ -17,7 +17,8 @@ async fn serve_api(Extension(api): Extension<OpenApi>) -> impl IntoApiResponse {
 pub fn build_api_router() -> axum::Router<RouterState> {
     let router = aide::axum::ApiRouter::new()
         .api_route("/", get(|| async { "Hello!".to_string() }))
-        .api_route("/challenges", get(get_challenges))
+        // .api_route("/challenges", get(get_challenges))
+        // .api_route("/challenges/diff", get(get_challenges_diff))
         .route("/openapi.json", get(serve_api))
         .route("/docs", Redoc::new("/api/v1/openapi.json").axum_route());
 
