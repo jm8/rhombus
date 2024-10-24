@@ -27,7 +27,12 @@ struct Challenge {
 pub struct ChallengeAttachment {
     pub name: String,
     pub url: String,
-    pub hash: String,
+}
+
+#[derive(Debug, Serialize, JsonSchema, Clone)]
+pub struct Attachment {
+    pub url: String,
+    pub dst: String,
 }
 
 impl Challenge {
@@ -53,19 +58,12 @@ impl Challenge {
                 .map(|attachment| ChallengeAttachment {
                     name: attachment.name.clone(),
                     url: attachment.url.clone(),
-                    hash: attachment.hash.clone(),
                 })
                 .collect(),
             flag: None,
             healthscript: None,
         }
     }
-}
-
-#[derive(Debug, Serialize, JsonSchema, Clone)]
-pub struct Attachment {
-    pub url: String,
-    pub dst: String,
 }
 
 pub async fn get_challenges(state: State<RouterState>) -> impl IntoApiResponse {
