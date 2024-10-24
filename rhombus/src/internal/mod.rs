@@ -1,5 +1,6 @@
 pub mod api;
 pub mod auth;
+pub mod challenge_diff;
 pub mod command_palette;
 pub mod database;
 pub mod discord;
