@@ -675,7 +675,6 @@ impl<T: ?Sized + LibSQLConnection + Send + Sync> Database for T {
             challenge_id: i64,
             name: String,
             url: String,
-            hash: String,
         }
         let mut challenge_attachments = BTreeMap::new();
         while let Some(row) = query_challenges.next().await? {
@@ -683,7 +682,6 @@ impl<T: ?Sized + LibSQLConnection + Send + Sync> Database for T {
             let attachment = ChallengeAttachment {
                 name: query_attachment.name,
                 url: query_attachment.url,
-                hash: query_attachment.hash,
             };
             match challenge_attachments.get_mut(&query_attachment.challenge_id) {
                 None => {
