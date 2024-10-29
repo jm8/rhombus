@@ -32,26 +32,9 @@
         "type": "github"
       }
     },
-    "paperclip-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1726697084,
-        "narHash": "sha256-/o5ZAXOGs3wpCgk99Uw7WGfE4b+MPosGdZYTq8xaCm8=",
-        "owner": "paperclip-rs",
-        "repo": "paperclip",
-        "rev": "fb9e5961911f2ea9048270f4aef64ffd60f77f49",
-        "type": "github"
-      },
-      "original": {
-        "owner": "paperclip-rs",
-        "repo": "paperclip",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
-        "paperclip-src": "paperclip-src",
         "rust-overlay": "rust-overlay",
         "utils": "utils"
       }

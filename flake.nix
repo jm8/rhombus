@@ -3,17 +3,12 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     utils.url = "github:numtide/flake-utils";
     rust-overlay.url = "github:oxalica/rust-overlay";
-    paperclip-src = {
-      url = "github:paperclip-rs/paperclip";
-      flake = false;
-    };
   };
 
   outputs = {
     nixpkgs,
     utils,
     rust-overlay,
-    paperclip-src,
     ...
   }:
     utils.lib.eachDefaultSystem (
@@ -39,13 +34,6 @@
           version = "0.1.0";
           src = ./.;
           cargoLock.lockFile = ./Cargo.lock;
-        };
-
-        packages.paperclip = pkgs.rustPlatform.buildRustPackage {
-          pname = "paperclip";
-          version = "0.1.0";
-          src = paperclip-src;
-          cargoHash = "";
         };
 
         apps.rhombus-cli = {
