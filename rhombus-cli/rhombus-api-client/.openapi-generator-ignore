@@ -1,5 +1,5 @@
 .travis.yml
 Cargo.toml
 git_push.sh
-docs
+docs/*.md
 README.md

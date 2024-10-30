@@ -12,18 +12,15 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct ChallengeAttachment {
-    #[serde(rename = "name")]
-    pub name: String,
-    #[serde(rename = "url")]
-    pub url: String,
+pub struct ChallengeDataPatch {
+    #[serde(rename = "actions")]
+    pub actions: Vec<models::ChallengeDataPatchAction>,
 }
 
-impl ChallengeAttachment {
-    pub fn new(name: String, url: String) -> ChallengeAttachment {
-        ChallengeAttachment {
-            name,
-            url,
+impl ChallengeDataPatch {
+    pub fn new(actions: Vec<models::ChallengeDataPatchAction>) -> ChallengeDataPatch {
+        ChallengeDataPatch {
+            actions,
         }
     }
 }

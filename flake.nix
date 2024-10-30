@@ -60,11 +60,12 @@
             sqlite
             mold
             go-task
-            # tailwindcss
+            tailwindcss
             cargo-watch
             systemfd
             rust-toolchain
             nodePackages.pnpm
+            openapi-generator-cli
           ];
         };
       }

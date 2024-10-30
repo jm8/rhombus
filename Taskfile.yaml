@@ -46,8 +46,8 @@ tasks:
     cmds:
       - node build.mjs
 
-  generate-api:
-    desc: Genearte the rhombus api crate based on the rhombus OpenAPI specification
+  generate-api-client:
+    desc: Genearte the rhombus api client crate based on the rhombus OpenAPI specification
     dir: rhombus-cli
     cmds:
       - openapi-generator-cli generate -g rust -i http://localhost:3000/api/v1/openapi.json -o rhombus-api-client

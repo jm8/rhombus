@@ -12,18 +12,21 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct ChallengeAttachment {
+pub struct Author {
+    #[serde(rename = "avatar_url")]
+    pub avatar_url: String,
+    #[serde(rename = "discord_id")]
+    pub discord_id: i32,
     #[serde(rename = "name")]
     pub name: String,
-    #[serde(rename = "url")]
-    pub url: String,
 }
 
-impl ChallengeAttachment {
-    pub fn new(name: String, url: String) -> ChallengeAttachment {
-        ChallengeAttachment {
+impl Author {
+    pub fn new(avatar_url: String, discord_id: i32, name: String) -> Author {
+        Author {
+            avatar_url,
+            discord_id,
             name,
-            url,
         }
     }
 }
