@@ -19,10 +19,11 @@ pub struct ChallengeDataPatch {
 impl ChallengeDataPatch {
     pub fn diff(old: &ChallengeData, new: &ChallengeData) -> Self {
         let mut actions = vec![];
+
         for (id, new_challenge) in new.challenges.iter() {
             match old.challenges.get(id) {
                 Some(old_challenge) => {
-                    if let Some(patch) = ChallengePatch::diff(old_challenge, &new_challenge) {
+                    if let Some(patch) = ChallengePatch::diff(old_challenge, new_challenge) {
                         actions.push(ChallengeDataPatchAction::PatchChallenge {
                             id: id.clone(),
                             patch,
@@ -37,19 +38,69 @@ impl ChallengeDataPatch {
         }
         for id in old.challenges.keys() {
             if !new.challenges.contains_key(id) {
-                actions.push(ChallengeDataPatchAction::DeleteChallenge { id: id.clone() })
+                actions.push(ChallengeDataPatchAction::DeleteChallenge { id: id.clone() });
             }
         }
+
+        for (id, new_author) in new.authors.iter() {
+            match old.authors.get(id) {
+                Some(old_author) => {
+                    if let Some(patch) = AuthorPatch::diff(old_author, new_author) {
+                        actions.push(ChallengeDataPatchAction::PatchAuthor {
+                            id: id.clone(),
+                            patch,
+                        });
+                    }
+                }
+                None => actions.push(ChallengeDataPatchAction::CreateAuthor {
+                    id: id.clone(),
+                    value: new_author.clone(),
+                }),
+            }
+        }
+        for id in old.authors.keys() {
+            if !new.authors.contains_key(id) {
+                actions.push(ChallengeDataPatchAction::DeleteAuthor { id: id.clone() });
+            }
+        }
+
+        for (id, new_category) in new.categories.iter() {
+            match old.categories.get(id) {
+                Some(old_category) => {
+                    if let Some(patch) = CategoryPatch::diff(old_category, new_category) {
+                        actions.push(ChallengeDataPatchAction::PatchCategory {
+                            id: id.clone(),
+                            patch,
+                        });
+                    }
+                }
+                None => actions.push(ChallengeDataPatchAction::CreateCategory {
+                    id: id.clone(),
+                    value: new_category.clone(),
+                }),
+            }
+        }
+        for id in old.categories.keys() {
+            if !new.categories.contains_key(id) {
+                actions.push(ChallengeDataPatchAction::DeleteCategory { id: id.clone() });
+            }
+        }
+
         Self { actions }
     }
 }
-
 #[derive(Debug, Serialize, Deserialize, JsonSchema, Clone)]
 #[serde(tag = "type", rename_all = "snake_case")]
 enum ChallengeDataPatchAction {
     PatchChallenge { id: String, patch: ChallengePatch },
     DeleteChallenge { id: String },
     CreateChallenge { id: String, value: Challenge },
+    PatchAuthor { id: String, patch: AuthorPatch },
+    DeleteAuthor { id: String },
+    CreateAuthor { id: String, value: Author },
+    PatchCategory { id: String, patch: CategoryPatch },
+    DeleteCategory { id: String },
+    CreateCategory { id: String, value: Category },
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema, Clone)]
@@ -151,6 +202,21 @@ pub struct CategoryPatch {
     pub color: Option<Patch<String>>,
 }
 
+impl CategoryPatch {
+    pub fn diff(old: &Category, new: &Category) -> Option<Self> {
+        let result = Self {
+            name: Patch::diff(&old.name, &new.name),
+            color: Patch::diff(&old.color, &new.color),
+        };
+
+        result.has_change().then_some(result)
+    }
+
+    pub fn has_change(&self) -> bool {
+        self.name.is_some() || self.color.is_some()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, JsonSchema, Clone)]
 pub struct Author {
     pub name: String,
@@ -166,6 +232,22 @@ pub struct AuthorPatch {
     pub avatar_url: Option<Patch<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub discord_id: Option<Patch<NonZeroU64>>,
+}
+
+impl AuthorPatch {
+    pub fn diff(old: &Author, new: &Author) -> Option<Self> {
+        let result = Self {
+            name: Patch::diff(&old.name, &new.name),
+            avatar_url: Patch::diff(&old.avatar_url, &new.avatar_url),
+            discord_id: Patch::diff(&old.discord_id, &new.discord_id),
+        };
+
+        result.has_change().then_some(result)
+    }
+
+    pub fn has_change(&self) -> bool {
+        self.name.is_some() || self.avatar_url.is_some() || self.discord_id.is_some()
+    }
 }
 
 impl From<&database::provider::ChallengeData> for ChallengeData {
@@ -245,54 +327,6 @@ mod test {
         let actual = ChallengeDataPatch::diff(&old, &new);
         let actual = serde_json::to_string_pretty(&actual).unwrap();
         expected.assert_eq(&actual);
-    }
-
-    #[test]
-    fn test_add_challenge() {
-        check(
-            r#"
-            {
-                "challenges": {},
-                "categories": {},
-                "authors": {}
-            }
-            "#,
-            r#"
-            {
-              "challenges": {
-                "test": {
-                  "name": "Test challenge",
-                  "description": "Test",
-                  "category": "abc",
-                  "author": "john daker",
-                  "files": [],
-                  "flag": "rhombusctf{abc}"
-                }
-              },
-              "categories": {},
-              "authors": {}
-            }
-            "#,
-            expect![[r#"
-                {
-                  "actions": [
-                    {
-                      "type": "create_challenge",
-                      "id": "test",
-                      "value": {
-                        "name": "Test challenge",
-                        "description": "Test",
-                        "category": "abc",
-                        "author": "john daker",
-                        "ticket_template": null,
-                        "files": [],
-                        "flag": "rhombusctf{abc}",
-                        "healthscript": null
-                      }
-                    }
-                  ]
-                }"#]],
-        );
     }
 
     #[test]
@@ -403,6 +437,166 @@ mod test {
                     {
                       "type": "delete_challenge",
                       "id": "test"
+                    }
+                  ]
+                }"#]],
+        );
+    }
+
+    #[test]
+    fn test_add_challenge_and_category_and_author() {
+        check(
+            r#"
+            {
+              "challenges": {},
+              "categories": {},
+              "authors": {}
+            }
+        "#,
+            r#"
+            {
+              "challenges": {
+                "twoplustwo": {
+                  "name": "2+2",
+                  "description": "solve it",
+                  "category": "math",
+                  "author": "jdaker",
+                  "files": [ {"name": "equation.pdf", "url": "https://example.com/equation.pdf"} ],
+                  "flag": "rhombusctf{abc}"
+                }
+              },
+              "categories": {
+                "math": {
+                  "name": "Mathematics",
+                  "color": "blue"
+                }
+              },
+              "authors": {
+                "jdaker": {
+                  "name": "John Daker",
+                  "avatar_url": "https://www.gravatar.com/avatar/23463b99b62a72f26ed677cc556c44e8?s=200&d=identicon&r=g",
+                  "discord_id": 12345678
+                }
+              }
+            }
+        "#,
+            expect![[r#"
+                {
+                  "actions": [
+                    {
+                      "type": "create_challenge",
+                      "id": "twoplustwo",
+                      "value": {
+                        "name": "2+2",
+                        "description": "solve it",
+                        "category": "math",
+                        "author": "jdaker",
+                        "ticket_template": null,
+                        "files": [
+                          {
+                            "name": "equation.pdf",
+                            "url": "https://example.com/equation.pdf"
+                          }
+                        ],
+                        "flag": "rhombusctf{abc}",
+                        "healthscript": null
+                      }
+                    },
+                    {
+                      "type": "create_author",
+                      "id": "jdaker",
+                      "value": {
+                        "name": "John Daker",
+                        "avatar_url": "https://www.gravatar.com/avatar/23463b99b62a72f26ed677cc556c44e8?s=200&d=identicon&r=g",
+                        "discord_id": 12345678
+                      }
+                    },
+                    {
+                      "type": "create_category",
+                      "id": "math",
+                      "value": {
+                        "name": "Mathematics",
+                        "color": "blue"
+                      }
+                    }
+                  ]
+                }"#]],
+        );
+    }
+
+    #[test]
+    fn test_modify_author() {
+        check(
+            r#"
+            {
+              "challenges": {
+                "twoplustwo": {
+                  "name": "2+2",
+                  "description": "solve it",
+                  "category": "math",
+                  "author": "jdaker",
+                  "files": [ {"name": "equation.pdf", "url": "https://example.com/equation.pdf"} ],
+                  "flag": "rhombusctf{abc}"
+                }
+              },
+              "categories": {
+                "math": {
+                  "name": "Mathematics",
+                  "color": "blue"
+                }
+              },
+              "authors": {
+                "jdaker": {
+                  "name": "John Daker",
+                  "avatar_url": "https://www.gravatar.com/avatar/23463b99b62a72f26ed677cc556c44e8?s=200&d=identicon&r=g",
+                  "discord_id": 12345678
+                }
+              }
+            }
+        "#,
+            r#"
+            {
+              "challenges": {
+                "twoplustwo": {
+                  "name": "2+2",
+                  "description": "solve it",
+                  "category": "math",
+                  "author": "jdaker",
+                  "files": [ {"name": "equation.pdf", "url": "https://example.com/equation.pdf"} ],
+                  "flag": "rhombusctf{abc}"
+                }
+              },
+              "categories": {
+                "math": {
+                  "name": "Mathematics",
+                  "color": "blue"
+                }
+              },
+              "authors": {
+                "jdaker": {
+                  "name": "John Baker",
+                  "avatar_url": "https://www.gravatar.com/avatar/23463b99b62a72f26ed677cc556c44e8?s=200&d=identicon&r=g",
+                  "discord_id": 87654321
+                }
+              }
+            }
+        "#,
+            expect![[r#"
+                {
+                  "actions": [
+                    {
+                      "type": "patch_author",
+                      "id": "jdaker",
+                      "patch": {
+                        "name": {
+                          "old": "John Daker",
+                          "new": "John Baker"
+                        },
+                        "discord_id": {
+                          "old": 12345678,
+                          "new": 87654321
+                        }
+                      }
                     }
                   ]
                 }"#]],
