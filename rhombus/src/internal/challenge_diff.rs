@@ -2,6 +2,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, num::NonZeroU64};
 
+use super::database;
+
 #[derive(Debug, Serialize, Deserialize, JsonSchema, Clone, Default)]
 pub struct ChallengeData {
     pub challenges: BTreeMap<String, Challenge>,
@@ -137,7 +139,6 @@ impl ChallengePatch {
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema, Clone)]
 pub struct Category {
-    pub id: i64,
     pub name: String,
     pub color: String,
 }
@@ -152,7 +153,6 @@ pub struct CategoryPatch {
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema, Clone)]
 pub struct Author {
-    pub id: i64,
     pub name: String,
     pub avatar_url: String,
     pub discord_id: NonZeroU64,
@@ -166,6 +166,72 @@ pub struct AuthorPatch {
     pub avatar_url: Option<Patch<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub discord_id: Option<Patch<NonZeroU64>>,
+}
+
+impl From<&database::provider::ChallengeData> for ChallengeData {
+    fn from(db_data: &database::provider::ChallengeData) -> Self {
+        let challenges = db_data
+            .challenges
+            .iter()
+            .map(|(id, db_challenge)| {
+                (
+                    id.clone(),
+                    Challenge {
+                        name: db_challenge.name.clone(),
+                        description: db_challenge.description.clone(),
+                        category: db_challenge.category_id.clone(),
+                        author: db_challenge.author_id.clone(),
+                        ticket_template: db_challenge.ticket_template.clone(),
+                        files: db_challenge
+                            .attachments
+                            .iter()
+                            .map(|attachment| ChallengeAttachment {
+                                name: attachment.name.clone(),
+                                url: attachment.url.clone(),
+                            })
+                            .collect(),
+                        flag: db_challenge.flag.clone(),
+                        healthscript: db_challenge.healthscript.clone(),
+                    },
+                )
+            })
+            .collect();
+
+        let categories = db_data
+            .categories
+            .iter()
+            .map(|(id, db_category)| {
+                (
+                    id.clone(),
+                    Category {
+                        name: db_category.name.clone(),
+                        color: db_category.color.clone(),
+                    },
+                )
+            })
+            .collect();
+
+        let authors = db_data
+            .authors
+            .iter()
+            .map(|(id, db_author)| {
+                (
+                    id.clone(),
+                    Author {
+                        name: db_author.name.clone(),
+                        avatar_url: db_author.avatar_url.clone(),
+                        discord_id: db_author.discord_id,
+                    },
+                )
+            })
+            .collect();
+
+        ChallengeData {
+            challenges,
+            categories,
+            authors,
+        }
+    }
 }
 
 #[cfg(test)]

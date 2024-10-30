@@ -6,7 +6,7 @@ members = [
     "examples/standalone",
     "examples/plugin",
     "examples/external-plugin",
-    "examples/demo", "challenge-loader",
+    "examples/demo",
 ]
 
 [profile.release]
