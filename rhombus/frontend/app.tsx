@@ -553,11 +553,12 @@ const ChallengesComponent = ({
                               </Tooltip.Portal>
                               <Tooltip.Trigger as="span" class="cursor-pointer">
                                 {translate("solves-points", {
-                                  solves: challenge.division_solves.find(
-                                    (division_solves) =>
-                                      division_solves.division_id ===
-                                      data().division_id,
-                                  ).solves,
+                                  solves:
+                                    challenge.division_solves.find(
+                                      (division_solves) =>
+                                        division_solves.division_id ===
+                                        data().division_id,
+                                    )?.solves || 0,
                                   points: solve?.points || challenge.points,
                                 })}
                               </Tooltip.Trigger>
@@ -688,21 +689,21 @@ type CommandPaletteData = {
 };
 
 type ChallengesData = {
-  division_id: number;
+  division_id: string;
   ticket_enabled: boolean;
   challenges: {
-    id: number;
+    id: string;
     name: string;
     description: string;
     health: {
       healthy: boolean;
       last_checked: string;
     } | null;
-    category_id: number;
-    author_id: number;
+    category_id: string;
+    author_id: string;
     points: number;
     division_solves: {
-      division_id: number;
+      division_id: string;
       solves: number;
     }[];
     attachments: {
@@ -711,19 +712,19 @@ type ChallengesData = {
     }[];
   }[];
   categories: {
-    id: number;
+    id: string;
     name: string;
     color: string;
   }[];
   authors: Record<
-    number,
+    string,
     {
       name: string;
       avatar_url: string;
     }
   >;
   divisions: Record<
-    number,
+    string,
     {
       name: string;
     }
@@ -737,7 +738,7 @@ type ChallengesData = {
       }
     >;
     solves: Record<
-      number,
+      string,
       {
         solved_at: Date;
         user_id: number;
@@ -775,10 +776,18 @@ document.addEventListener("DOMContentLoaded", () => {
     (
       evt: Event & { detail: { kind: "success" | "error"; message: string } },
     ) => {
+      const binaryString = atob(evt.detail.message);
+      let bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const decoder = new TextDecoder("utf-8");
+      const message = decoder.decode(bytes);
+
       if (evt.detail.kind === "success") {
-        toast.success(evt.detail.message);
+        toast.success(message);
       } else if (evt.detail.kind === "error") {
-        toast.error(evt.detail.message);
+        toast.error(message);
       } else {
         console.log("Unknown toast kind", evt.detail.kind);
       }
