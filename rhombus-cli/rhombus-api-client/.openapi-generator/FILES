@@ -24,6 +24,5 @@ src/models/challenge_data_patch_action_one_of_8.rs
 src/models/challenge_patch.rs
 src/models/mod.rs
 src/models/patch_for_array_of_challenge_attachment.rs
-src/models/patch_for_non_zero_u64.rs
 src/models/patch_for_nullable_string.rs
 src/models/patch_for_string.rs

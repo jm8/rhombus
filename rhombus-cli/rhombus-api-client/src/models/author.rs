@@ -16,13 +16,13 @@ pub struct Author {
     #[serde(rename = "avatar_url")]
     pub avatar_url: String,
     #[serde(rename = "discord_id")]
-    pub discord_id: i32,
+    pub discord_id: String,
     #[serde(rename = "name")]
     pub name: String,
 }
 
 impl Author {
-    pub fn new(avatar_url: String, discord_id: i32, name: String) -> Author {
+    pub fn new(avatar_url: String, discord_id: String, name: String) -> Author {
         Author {
             avatar_url,
             discord_id,

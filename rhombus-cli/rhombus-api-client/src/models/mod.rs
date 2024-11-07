@@ -38,8 +38,6 @@ pub mod challenge_patch;
 pub use self::challenge_patch::ChallengePatch;
 pub mod patch_for_array_of_challenge_attachment;
 pub use self::patch_for_array_of_challenge_attachment::PatchForArrayOfChallengeAttachment;
-pub mod patch_for_non_zero_u64;
-pub use self::patch_for_non_zero_u64::PatchForNonZeroU64;
 pub mod patch_for_nullable_string;
 pub use self::patch_for_nullable_string::PatchForNullableString;
 pub mod patch_for_string;

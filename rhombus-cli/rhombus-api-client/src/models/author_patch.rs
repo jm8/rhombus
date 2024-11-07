@@ -16,7 +16,7 @@ pub struct AuthorPatch {
     #[serde(rename = "avatar_url", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub avatar_url: Option<Option<Box<models::PatchForString>>>,
     #[serde(rename = "discord_id", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub discord_id: Option<Option<Box<models::PatchForNonZeroU64>>>,
+    pub discord_id: Option<Option<Box<models::PatchForString>>>,
     #[serde(rename = "name", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub name: Option<Option<Box<models::PatchForString>>>,
 }

@@ -10,7 +10,9 @@ categories:
 authors:
   - name: mbund
     avatar: https://www.gravatar.com/avatar
-    discord_id: 1014305712312172595
+    discord_id: "1014305712312172595"
+    avatar_url: "https://example.com/image.png"
   - name: mbunk
     avatar: https://www.gravatar.com/avatar
-    discord_id: 290276083687882753
+    discord_id: "290276083687882753"
+    avatar_url: "https://example.com/image.png"

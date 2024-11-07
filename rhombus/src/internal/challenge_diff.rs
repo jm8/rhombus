@@ -221,7 +221,7 @@ impl CategoryPatch {
 pub struct Author {
     pub name: String,
     pub avatar_url: String,
-    pub discord_id: NonZeroU64,
+    pub discord_id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema, Clone)]
@@ -231,7 +231,7 @@ pub struct AuthorPatch {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub avatar_url: Option<Patch<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub discord_id: Option<Patch<NonZeroU64>>,
+    pub discord_id: Option<Patch<String>>,
 }
 
 impl AuthorPatch {
@@ -302,7 +302,7 @@ impl From<&database::provider::ChallengeData> for ChallengeData {
                     Author {
                         name: db_author.name.clone(),
                         avatar_url: db_author.avatar_url.clone(),
-                        discord_id: db_author.discord_id,
+                        discord_id: db_author.discord_id.to_string(),
                     },
                 )
             })
