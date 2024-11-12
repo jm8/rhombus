@@ -20,6 +20,12 @@ tasks:
     cmds:
       - mold -run cargo run -p standalone
 
+  apply-standalone:
+    desc: Run rhombus-cli admin apply from examples/standalone/challenges
+    dir: examples/standalone/challenges
+    cmds:
+      - mold -run cargo run --manifest-path ../../../Cargo.toml --bin rhombus-cli -- admin apply
+
   watch-demo:
     desc: Start cargo watch
     dir: examples/demo
@@ -63,4 +69,5 @@ tasks:
     dir: rhombus-cli
     cmds:
       - openapi-generator-cli generate -g rust -i http://localhost:3000/api/v1/openapi.json -o rhombus-api-client
+
 
