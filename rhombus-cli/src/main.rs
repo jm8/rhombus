@@ -1,17 +1,17 @@
-use std::{
-    collections::HashMap,
-    fs::{self, ReadDir},
-    path::{Path, PathBuf},
-};
-
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use config::{Config, FileFormat};
 use rhombus_api_client::{
     apis::{configuration::Configuration as ApiConfiguration, default_api::challenges_get},
-    models::{self},
+    models::{self, challenge},
 };
 use serde::{Deserialize, Serialize};
+use std::fmt::Write as _;
+use std::{
+    collections::{BTreeMap, HashMap},
+    fs::{self, ReadDir},
+    path::{Path, PathBuf},
+};
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -33,34 +33,54 @@ enum AdminCommands {
     Apply,
 }
 
-#[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 struct ChallengesYaml {
-    authors: Vec<AuthorWithStableId>,
-    categories: Vec<CategoryWithStableId>,
+    pub authors: Vec<AuthorWithStableId>,
+    pub categories: Vec<CategoryWithStableId>,
 }
 
-#[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-struct ChallengesWithStableId {
-    stable_id: String,
-    #[serde(flatten)]
-    challenge: models::Challenge,
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
+enum ChallengeAttachment {
+    Url { url: String, dst: String },
+    File { src: String, dst: String },
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+struct ChallengeWithStableId {
+    pub stable_id: String,
+    pub author: String,
+    pub category: String,
+    pub description: String,
+    pub files: Vec<ChallengeAttachment>,
+    pub flag: String,
+    pub healthscript: Option<String>,
+    pub name: String,
+    pub ticket_template: Option<String>,
 }
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 struct AuthorWithStableId {
-    stable_id: Option<String>,
+    pub stable_id: String,
     #[serde(flatten)]
-    author: models::Author,
+    pub author: models::Author,
 }
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 struct CategoryWithStableId {
-    stable_id: Option<String>,
+    pub stable_id: String,
     #[serde(flatten)]
-    category: models::Category,
+    pub category: models::Category,
 }
 
-fn load_challenges() -> Result<models::ChallengeData> {
+pub fn slice_to_hex_string(slice: &[u8]) -> String {
+    slice.iter().fold(String::new(), |mut output, b| {
+        let _ = write!(output, "{b:02x}");
+        output
+    })
+}
+
+async fn load_challenges(base_url: &str) -> Result<models::ChallengeData> {
     let config = Config::builder()
         .add_source(config::File::new("loader.yaml", FileFormat::Yaml))
         .build()?
@@ -70,9 +90,7 @@ fn load_challenges() -> Result<models::ChallengeData> {
     let authors = config
         .authors
         .into_iter()
-        .map(|AuthorWithStableId { stable_id, author }| {
-            (stable_id.unwrap_or_else(|| author.name.clone()), author)
-        })
+        .map(|AuthorWithStableId { stable_id, author }| (stable_id, author))
         .collect();
 
     let categories = config
@@ -82,34 +100,56 @@ fn load_challenges() -> Result<models::ChallengeData> {
             |CategoryWithStableId {
                  stable_id,
                  category,
-             }| { (stable_id.unwrap_or_else(|| category.name.clone()), category) },
+             }| { (stable_id, category) },
         )
         .collect();
 
-    let challenges = ChallengeYamlWalker::new(&PathBuf::from("."))
+    let challenge_files = ChallengeYamlWalker::new(&PathBuf::from("."))
         .into_iter()
         .map(|path| {
-            Ok(Config::builder()
-                .add_source(config::File::from(path.as_path()))
-                .build()
-                .unwrap()
-                .try_deserialize::<ChallengesWithStableId>()
-                .with_context(|| format!("Failed to deserialize {}", path.display()))?)
+            Ok((
+                path.clone(),
+                Config::builder()
+                    .add_source(config::File::from(path.as_path()))
+                    .build()
+                    .unwrap()
+                    .try_deserialize::<ChallengeWithStableId>()
+                    .with_context(|| format!("Failed to deserialize {}", path.display()))?,
+            ))
         })
-        .map(|res| {
-            res.map(
-                |ChallengesWithStableId {
-                     stable_id,
-                     challenge,
-                 }| { (stable_id, challenge) },
-            )
-        })
-        .collect::<Result<HashMap<String, models::Challenge>>>()?;
+        .collect::<Result<Vec<(PathBuf, ChallengeWithStableId)>>>()?;
 
+    let mut hash_to_file_path = BTreeMap::new();
+
+    struct ChallengeIntermediateAttachment {
+        name: String,
+        source: ChallengeIntermediateAttachmentSource,
+    }
+    enum ChallengeIntermediateAttachmentSource {
+        Hash(String),
+        Url(String),
+    }
+
+    for (challenge_yaml_path, chal) in challenge_files {
+        for file in chal.files {
+            match file {
+                ChallengeAttachment::File { src, dst } => {
+                    let file_path = challenge_yaml_path.parent().unwrap().join(src);
+                    let data = tokio::fs::read(file_path.as_path()).await?;
+                    let digest = ring::digest::digest(&ring::digest::SHA256, &data);
+                    let hash = slice_to_hex_string(digest.as_ref());
+                    hash_to_file_path.insert(hash, file_path);
+                }
+                _ => (),
+            }
+        }
+    }
+
+    println!("{:#?}", hash_to_file_path);
     Ok(models::ChallengeData {
         authors,
         categories,
-        challenges,
+        challenges: todo!(),
     })
 }
 
@@ -156,8 +196,10 @@ impl Iterator for ChallengeYamlWalker {
 async fn main() -> Result<()> {
     let cli = Cli::parse();
 
+    let base_url = "http://localhost:3000".to_owned();
+
     let configuration = ApiConfiguration {
-        base_path: "http://localhost:3000/api/v1".to_string(),
+        base_path: format!("{}/api/v1", base_url),
         ..Default::default()
     };
 
@@ -165,12 +207,12 @@ async fn main() -> Result<()> {
         Commands::Admin {
             command: AdminCommands::Apply,
         } => {
-            let x = load_challenges()?;
+            let x = load_challenges(&base_url).await?;
             println!("{:?}", x);
         }
     }
 
-    let challenges = challenges_get(&configuration).await;
+    let challenges = challenges_get(&configuration).await?;
 
     println!("{:?}", challenges);
 

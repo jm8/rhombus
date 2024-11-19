@@ -17,3 +17,4 @@ rhombus-api-client = { path = "./rhombus-api-client" }
 serde = { version = "1.0.210", features = ["derive"] }
 thiserror = "1.0.64"
 tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread"] }
+ring = "0.17.8"
