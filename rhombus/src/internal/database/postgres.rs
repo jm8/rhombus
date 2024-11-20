@@ -407,6 +407,10 @@ impl Database for Postgres {
     async fn get_last_created_ticket_time(&self, _user_id: i64) -> Result<Option<DateTime<Utc>>> {
         todo!()
     }
+
+    async fn get_attachment(&self, _hash: &str) -> Result<Option<String>> {
+        todo!()
+    }
 }
 
 #[cfg(test)]

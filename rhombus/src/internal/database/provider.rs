@@ -374,4 +374,5 @@ pub trait Database {
     async fn download_file(&self, hash: &str) -> Result<(Bytes, String)>;
     async fn get_site_statistics(&self) -> Result<SiteStatistics>;
     async fn get_last_created_ticket_time(&self, user_id: i64) -> Result<Option<DateTime<Utc>>>;
+    async fn get_attachment(&self, hash: &str) -> Result<Option<String>>;
 }

@@ -80,7 +80,7 @@ pub fn slice_to_hex_string(slice: &[u8]) -> String {
     })
 }
 
-async fn load_challenges(base_url: &str) -> Result<models::ChallengeData> {
+async fn load_challenges(api: &ApiConfiguration) -> Result<models::ChallengeData> {
     let config = Config::builder()
         .add_source(config::File::new("loader.yaml", FileFormat::Yaml))
         .build()?
@@ -133,7 +133,7 @@ async fn load_challenges(base_url: &str) -> Result<models::ChallengeData> {
     for (challenge_yaml_path, chal) in challenge_files {
         for file in chal.files {
             match file {
-                ChallengeAttachment::File { src, dst } => {
+                ChallengeAttachment::File { src, dst: _ } => {
                     let file_path = challenge_yaml_path.parent().unwrap().join(src);
                     let data = tokio::fs::read(file_path.as_path()).await?;
                     let digest = ring::digest::digest(&ring::digest::SHA256, &data);
@@ -198,7 +198,7 @@ async fn main() -> Result<()> {
 
     let base_url = "http://localhost:3000".to_owned();
 
-    let configuration = ApiConfiguration {
+    let api = ApiConfiguration {
         base_path: format!("{}/api/v1", base_url),
         ..Default::default()
     };
@@ -207,12 +207,12 @@ async fn main() -> Result<()> {
         Commands::Admin {
             command: AdminCommands::Apply,
         } => {
-            let x = load_challenges(&base_url).await?;
+            let x = load_challenges(&api).await?;
             println!("{:?}", x);
         }
     }
 
-    let challenges = challenges_get(&configuration).await?;
+    let challenges = challenges_get(&api).await?;
 
     println!("{:?}", challenges);
 

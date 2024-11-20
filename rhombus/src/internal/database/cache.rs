@@ -589,6 +589,10 @@ impl Database for DbCache {
     async fn get_last_created_ticket_time(&self, user_id: i64) -> Result<Option<DateTime<Utc>>> {
         self.inner.get_last_created_ticket_time(user_id).await
     }
+
+    async fn get_attachment(&self, hash: &str) -> Result<Option<String>> {
+        self.inner.get_attachment(hash).await
+    }
 }
 
 pub static CHALLENGES_CACHE: LazyLock<RwLock<Option<Challenges>>> = LazyLock::new(RwLock::default);

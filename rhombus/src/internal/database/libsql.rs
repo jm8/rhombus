@@ -2451,6 +2451,25 @@ impl<T: ?Sized + LibSQLConnection + Send + Sync> Database for T {
 
         Ok(last_opened_at)
     }
+
+    async fn get_attachment(&self, hash: &str) -> Result<Option<String>> {
+        Ok(self
+            .connect()
+            .await?
+            .query(
+                "
+                SELECT url
+                FROM rhombus_file_attachment
+                WHERE hash = ?1
+                LIMIT 1
+            ",
+                [hash],
+            )
+            .await?
+            .next()
+            .await?
+            .map(|row| row.get::<String>(0).unwrap()))
+    }
 }
 
 pub async fn create_team(tx: &Transaction) -> Result<i64> {
