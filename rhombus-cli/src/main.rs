@@ -2,7 +2,10 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use config::{Config, FileFormat};
 use rhombus_api_client::{
-    apis::{configuration::Configuration as ApiConfiguration, default_api::challenges_get},
+    apis::{
+        configuration::Configuration as ApiConfiguration,
+        default_api::{attachment_hash_get, challenges_get},
+    },
     models::{self, challenge},
 };
 use serde::{Deserialize, Serialize};
@@ -146,6 +149,12 @@ async fn load_challenges(api: &ApiConfiguration) -> Result<models::ChallengeData
     }
 
     println!("{:#?}", hash_to_file_path);
+
+    for (hash, path) in hash_to_file_path {
+        let url = attachment_hash_get(api, &hash).await?;
+        println!("{} -> {:?}", hash, url);
+    }
+
     Ok(models::ChallengeData {
         authors,
         categories,

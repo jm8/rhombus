@@ -22,6 +22,10 @@ src/models/challenge_data_patch_action_one_of_6.rs
 src/models/challenge_data_patch_action_one_of_7.rs
 src/models/challenge_data_patch_action_one_of_8.rs
 src/models/challenge_patch.rs
+src/models/get_attachment_params.rs
+src/models/get_attachment_result.rs
+src/models/get_attachment_result_one_of.rs
+src/models/get_attachment_result_one_of_1.rs
 src/models/mod.rs
 src/models/patch_for_array_of_challenge_attachment.rs
 src/models/patch_for_nullable_string.rs
