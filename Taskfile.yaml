@@ -14,11 +14,29 @@ tasks:
     cmds:
       - mold -run cargo watch -x 'run -p standalone'
 
+  run-standalone:
+    desc: Cargo run the standalone
+    dir: examples/standalone
+    cmds:
+      - mold -run cargo run -p standalone
+
+  apply-standalone:
+    desc: Run rhombus-cli admin apply from examples/standalone/challenges
+    dir: examples/standalone/challenges
+    cmds:
+      - mold -run cargo run --manifest-path ../../../Cargo.toml --bin rhombus-cli -- admin apply
+
   watch-demo:
     desc: Start cargo watch
     dir: examples/demo
     cmds:
       - mold -run cargo watch -x run
+
+  run-demo:
+    desc: Cargo run the demo
+    dir: examples/demo
+    cmds:
+      - mold -run cargo run -p demo
 
   watch-standalone-release:
     desc: Start cargo watch
@@ -45,3 +63,11 @@ tasks:
       WATCH: true
     cmds:
       - node build.mjs
+
+  generate-api-client:
+    desc: Genearte the rhombus api client crate based on the rhombus OpenAPI specification
+    dir: rhombus-cli
+    cmds:
+      - openapi-generator-cli generate -g rust -i http://localhost:3000/api/v1/openapi.json -o rhombus-api-client
+
+
