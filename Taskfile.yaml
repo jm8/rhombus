@@ -2,14 +2,7 @@ version: "3"
 
 tasks:
   dev:
-    deps:
-      - watch-standalone
-      - watch-tailwindcss
-      - watch-clientjs
-    desc: Run cargo watch and tailwindcss concurrently
-
-  watch-standalone:
-    desc: Start cargo watch
+    desc: Watch the standalone example
     dir: examples/standalone
     cmds:
       - mold -run cargo watch -x 'run -p standalone'
@@ -26,12 +19,6 @@ tasks:
     cmds:
       - mold -run cargo run --manifest-path ../../../Cargo.toml --bin rhombus-cli -- admin apply
 
-  watch-demo:
-    desc: Start cargo watch
-    dir: examples/demo
-    cmds:
-      - mold -run cargo watch -x run
-
   run-demo:
     desc: Cargo run the demo
     dir: examples/demo
@@ -42,6 +29,12 @@ tasks:
     desc: Start cargo watch
     cmds:
       - mold -run cargo watch -x 'run -p standalone --release'
+
+  demo:
+    desc: Watch the demo
+    dir: examples/demo
+    cmds:
+      - mold -run cargo watch -x 'run -p demo'
 
   watch-standalone-systemfd:
     desc: Start cargo watch using systemfd to not drop connections on restart
@@ -63,11 +56,3 @@ tasks:
       WATCH: true
     cmds:
       - node build.mjs
-
-  generate-api-client:
-    desc: Genearte the rhombus api client crate based on the rhombus OpenAPI specification
-    dir: rhombus-cli
-    cmds:
-      - openapi-generator-cli generate -g rust -i http://localhost:3000/api/v1/openapi.json -o rhombus-api-client
-
-

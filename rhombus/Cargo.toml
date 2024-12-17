@@ -24,9 +24,9 @@ chrono-tz = "0.10.0"
 config = "0.14.0"
 dashmap = { version = "6.1.0", features = ["inline"] }
 dotenvy = "0.15.7"
-fancy-regex = "0.13.0"
+fancy-regex = "0.14.0"
 fluent = "0.16.1"
-futures = { version = "0.3.31", optional = true }
+futures = "0.3.31"
 healthscript = "1.0.3"
 intl-memoizer = "0.5.2"
 jsonwebtoken = "9.3.0"
@@ -66,8 +66,8 @@ sqlx = { version = "0.8.2", optional = true, features = [
   "chrono",
   "macros",
 ] }
-thiserror = "1.0.64"
 tonic = "0.12.3"
+thiserror = "2.0.6"
 tokio = { version = "1.40.0", features = ["full"] }
 tokio-rustls = { version = "0.26.0", default-features = false, optional = true, features = [
   "ring",
@@ -88,7 +88,6 @@ tonic-reflection = "0.12.3"
 
 [build-dependencies]
 tonic-build = "0.12.3"
-rustc_version = "0.4.1"
 
 [dev-dependencies]
 expect-test = "1.5.0"
@@ -99,17 +98,16 @@ testcontainers-modules = { version = "0.11.2", features = ["postgres"] }
 default = []
 postgres = ["dep:sqlx", "sqlx/postgres"]
 mysql = ["dep:sqlx", "sqlx/mysql"]
-libsql = ["dep:libsql", "dep:futures"]
+libsql = ["dep:libsql"]
 systemfd = ["dep:listenfd"]
 imap = [
   "dep:async-imap",
-  "dep:futures",
   "dep:mail-parser",
   "dep:tokio-rustls",
   "dep:webpki-roots",
 ]
 smtp = ["dep:lettre"]
-s3 = ["dep:rust-s3", "dep:futures"]
+s3 = ["dep:rust-s3"]
 shuttle = []
 testcontainers = []
 internal = []
@@ -126,5 +124,6 @@ all = [
   "internal",
 ]
 
-[lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(CHANNEL_NIGHTLY)'] }
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
