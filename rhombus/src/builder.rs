@@ -3,7 +3,7 @@ use std::{
     collections::BTreeMap,
     fmt::Debug,
     hash::{BuildHasher, BuildHasherDefault, Hasher},
-    net::IpAddr,
+    net::{IpAddr, SocketAddr},
     num::NonZeroU32,
     sync::Arc,
     time::Duration,
@@ -1161,6 +1161,16 @@ impl<P: Plugin + Send + Sync + 'static, U: UploadProvider + Send + Sync + 'stati
 pub struct RhombusApp {
     pub web: Arc<crate::internal::router::Router>,
     pub grpc: tonic::transport::server::Router,
+}
+
+impl RhombusApp {
+    pub async fn serve(self, web_addr: SocketAddr, grpc_addr: SocketAddr) -> Result<()> {
+        let listener = tokio::net::TcpListener::bind(web_addr).await?;
+        let a = tokio::task::spawn(async move { self.grpc.serve(grpc_addr).await.unwrap() });
+        let b = tokio::task::spawn(async move { self.web.serve(listener).await });
+        tokio::try_join!(a, b)?;
+        Ok(())
+    }
 }
 
 fn not_htmx_predicate<T>(req: &axum::http::Request<T>) -> bool {

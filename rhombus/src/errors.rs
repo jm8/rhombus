@@ -66,6 +66,9 @@ pub enum RhombusError {
 
     #[error("IO error: {0}")]
     IO(#[from] std::io::Error),
+
+    #[error("Join error: {0}")]
+    Join(#[from] tokio::task::JoinError),
 }
 
 #[derive(Error, Debug)]

@@ -51,8 +51,9 @@ async fn main() {
         .await
         .unwrap();
 
-    let listener = tokio::net::TcpListener::bind(":::3000").await.unwrap();
-    app.serve(listener).await;
+    app.serve("[::]:3000".parse().unwrap(), "[::]:3001".parse().unwrap())
+        .await
+        .unwrap();
 }
 
 struct DemoPlugin;
