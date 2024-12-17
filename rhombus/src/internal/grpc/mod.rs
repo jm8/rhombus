@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use crate::internal::database::provider::Connection;
 use proto::rhombus_server::{Rhombus, RhombusServer};
-use proto::{Author, ChallengeData, ChallengeDataPatch, HelloReply, HelloRequest};
+use proto::{
+    Author, Category, Challenge, ChallengeAttachment, ChallengeData, ChallengeDataPatch,
+    HelloReply, HelloRequest,
+};
 use tonic::{transport::server::Router, transport::Server, Request, Response, Status};
 
 pub mod proto {
@@ -42,8 +45,45 @@ impl Rhombus for MyGreeter {
             .map_err(|_| Status::internal("failed to get challenges"))?;
 
         Ok(Response::new(ChallengeData {
-            challenges: HashMap::new(),
-            categories: HashMap::new(),
+            challenges: chals
+                .challenges
+                .iter()
+                .map(|(k, v)| {
+                    (
+                        k.clone(),
+                        Challenge {
+                            author: v.author_id.clone(),
+                            name: v.name.clone(),
+                            description: v.description.clone(),
+                            category: v.category_id.clone(),
+                            ticket_template: v.ticket_template.clone(),
+                            files: v
+                                .attachments
+                                .iter()
+                                .map(|a| ChallengeAttachment {
+                                    name: a.name.clone(),
+                                    url: a.url.clone(),
+                                })
+                                .collect(),
+                            flag: v.flag.clone(),
+                            healthscript: v.healthscript.clone(),
+                        },
+                    )
+                })
+                .collect(),
+            categories: chals
+                .categories
+                .iter()
+                .map(|(k, v)| {
+                    (
+                        k.clone(),
+                        Category {
+                            color: v.color.clone(),
+                            name: v.name.clone(),
+                        },
+                    )
+                })
+                .collect(),
             authors: chals
                 .authors
                 .iter()
