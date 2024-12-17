@@ -409,8 +409,8 @@ impl<P: Plugin + Send + Sync + 'static, U: UploadProvider + Send + Sync + 'stati
     pub(crate) async fn build_axum_router(
         self,
         rr: Arc<crate::internal::router::Router>,
-    ) -> std::result::Result<axum::Router, RhombusError> {
-        let (self_arc, router) = {
+    ) -> std::result::Result<(Connection, axum::Router), RhombusError> {
+        let (self_arc, router, cached_db) = {
             let self_arc = Arc::new(self);
 
             let mut settings: Settings = self_arc
@@ -1077,7 +1077,7 @@ impl<P: Plugin + Send + Sync + 'static, U: UploadProvider + Send + Sync + 'stati
                 rhombus_router
             };
 
-            track_flusher(cached_db);
+            track_flusher(cached_db.clone());
 
             let router = router
                 .layer(middleware::from_fn(page_meta_middleware))
@@ -1135,24 +1135,24 @@ impl<P: Plugin + Send + Sync + 'static, U: UploadProvider + Send + Sync + 'stati
 
             let router = router.layer(CompressionLayer::new());
 
-            (self_arc, router)
+            (self_arc, router, cached_db)
         };
 
         let builder = Arc::try_unwrap(self_arc).unwrap();
         let builder = Arc::new(Mutex::new(Some(builder)));
         let router = router.layer(Extension(builder));
 
-        Ok(router)
+        Ok((cached_db, router))
     }
 
     pub async fn build(self) -> Result<RhombusApp> {
         let web = Arc::new(crate::internal::router::Router::new());
 
-        let router = self.build_axum_router(web.clone()).await?;
+        let (db, router) = self.build_axum_router(web.clone()).await?;
 
         web.update(router);
 
-        let grpc = grpc::make_server();
+        let grpc = grpc::make_server(db);
 
         Ok(RhombusApp { web, grpc })
     }

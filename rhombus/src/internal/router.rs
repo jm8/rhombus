@@ -142,7 +142,9 @@ pub fn rebuild_router<
 
         local.spawn_local(async move {
             tokio::task::spawn_local(async move {
-                let router = builder.build_axum_router(rr.clone()).await.unwrap();
+                // JOSH: FIXME BEFORE MAKING PR: This needs to somehow update the grpc with the
+                // new database
+                let (_, router) = builder.build_axum_router(rr.clone()).await.unwrap();
                 rr.update(router);
             })
             .await
