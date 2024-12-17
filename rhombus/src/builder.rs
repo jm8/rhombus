@@ -43,6 +43,7 @@ use crate::{
             MaxDivisionPlayers, OpenDivisionEligibilityProvider,
         },
         email::{mailgun::MailgunProvider, outbound_mailer::OutboundMailer},
+        grpc,
         health::{healthcheck_catch_up, healthcheck_runner},
         ip::{
             default_ip_extractor, ip_insert_blank_middleware, ip_insert_middleware,
@@ -1144,15 +1145,22 @@ impl<P: Plugin + Send + Sync + 'static, U: UploadProvider + Send + Sync + 'stati
         Ok(router)
     }
 
-    pub async fn build(self) -> Result<Arc<crate::internal::router::Router>> {
-        let rr = Arc::new(crate::internal::router::Router::new());
+    pub async fn build(self) -> Result<RhombusApp> {
+        let web = Arc::new(crate::internal::router::Router::new());
 
-        let router = self.build_axum_router(rr.clone()).await?;
+        let router = self.build_axum_router(web.clone()).await?;
 
-        rr.update(router);
+        web.update(router);
 
-        Ok(rr)
+        let grpc = grpc::make_server();
+
+        Ok(RhombusApp { web, grpc })
     }
+}
+
+pub struct RhombusApp {
+    pub web: Arc<crate::internal::router::Router>,
+    pub grpc: tonic::transport::server::Router,
 }
 
 fn not_htmx_predicate<T>(req: &axum::http::Request<T>) -> bool {

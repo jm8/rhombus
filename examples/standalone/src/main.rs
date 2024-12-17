@@ -1,6 +1,7 @@
 use std::{net::IpAddr, path::PathBuf};
 
-use rhombus::challenge_loader_plugin::ChallengeLoaderPlugin;
+use rhombus::{builder::RhombusApp, challenge_loader_plugin::ChallengeLoaderPlugin};
+use tokio::{join, spawn, try_join};
 use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
@@ -23,7 +24,7 @@ async fn main() {
         .parse::<IpAddr>()
         .unwrap();
 
-    let app = rhombus::Builder::default()
+    let RhombusApp { web, grpc } = rhombus::Builder::default()
         .load_env()
         .config_source(rhombus::config::File::with_name("config"))
         .plugin(ChallengeLoaderPlugin::new(PathBuf::from("challenges")))
@@ -33,5 +34,7 @@ async fn main() {
         .unwrap();
 
     let listener = tokio::net::TcpListener::bind(":::3000").await.unwrap();
-    app.serve(listener).await;
+    let a = spawn(async { grpc.serve("[::]:3001".parse().unwrap()).await.unwrap() });
+    let b = spawn(async move { web.serve(listener).await });
+    try_join!(a, b).unwrap();
 }

@@ -55,6 +55,7 @@
             tailwindcss-language-server
             vscode-langservers-extracted
             alejandra
+            grpcurl
 
             nodejs_20
             sqlite
@@ -65,6 +66,7 @@
             systemfd
             rust-toolchain
             nodePackages.pnpm
+            protobuf
           ];
         };
       }

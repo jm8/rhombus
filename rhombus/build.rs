@@ -1,3 +1,5 @@
+use std::{env, path::PathBuf};
+
 use rustc_version::{version_meta, Channel};
 
 fn main() {
@@ -13,5 +15,11 @@ fn main() {
         Channel::Nightly => "CHANNEL_NIGHTLY",
         Channel::Dev => "CHANNEL_DEV",
     };
-    println!("cargo:rustc-cfg={}", channel)
+    println!("cargo:rustc-cfg={}", channel);
+
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+    tonic_build::configure()
+        .file_descriptor_set_path(out_dir.join("rhombus_descriptor.bin"))
+        .compile_protos(&["../proto/rhombus.proto"], &["../proto"])
+        .unwrap();
 }
