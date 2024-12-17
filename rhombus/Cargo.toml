@@ -91,6 +91,7 @@ tonic-build = "0.12.3"
 rustc_version = "0.4.1"
 
 [dev-dependencies]
+expect-test = "1.5.0"
 testcontainers = "0.23.1"
 testcontainers-modules = { version = "0.11.2", features = ["postgres"] }
 

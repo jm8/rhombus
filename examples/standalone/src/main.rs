@@ -1,6 +1,5 @@
-use std::{net::IpAddr, path::PathBuf};
+use std::net::IpAddr;
 
-use rhombus::challenge_loader_plugin::ChallengeLoaderPlugin;
 use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
