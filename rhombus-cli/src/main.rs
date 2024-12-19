@@ -14,8 +14,8 @@ use std::{
 
 mod grpc {
     pub mod proto {
-        tonic::include_proto!("rhombus");
-        // include!("./rhombus.rs");
+        // tonic::include_proto!("rhombus");
+        include!("./rhombus.rs");
     }
 }
 
@@ -174,7 +174,8 @@ async fn main() -> Result<()> {
             categories: HashMap::new(),
             authors: HashMap::new(),
         }))
-        .await?;
+        .await?
+        .into_inner();
 
     println!("{:#?}", x);
 
