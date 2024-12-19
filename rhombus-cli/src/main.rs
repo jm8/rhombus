@@ -1,10 +1,15 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
+use colored::Colorize;
 use figment::{
     providers::{Format, Yaml},
     Figment,
 };
-use grpc::proto::{rhombus_client::RhombusClient, Challenge, ChallengeData, HelloRequest};
+use grpc::proto::{
+    challenge_data_patch_action::Action, rhombus_client::RhombusClient, Challenge,
+    ChallengeAttachmentsPatch, ChallengeData, ChallengeDataPatch, ChallengePatch, CreateChallenge,
+    HelloRequest, OptionalStringPatch, PatchChallenge, StringPatch,
+};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -14,8 +19,8 @@ use std::{
 
 mod grpc {
     pub mod proto {
-        tonic::include_proto!("rhombus");
-        // include!("./rhombus.rs");
+        // tonic::include_proto!("rhombus");
+        include!("./rhombus.rs");
     }
 }
 
@@ -174,9 +179,117 @@ async fn main() -> Result<()> {
             categories: HashMap::new(),
             authors: HashMap::new(),
         }))
-        .await?;
+        .await?
+        .into_inner();
+
+    print_diff(&x);
 
     println!("{:#?}", x);
-
     Ok(())
+}
+
+// enum DiffElement {
+//     PatchObject(HashMap<String, DiffElement>),
+//     CreateObject(HashMap<String, String>),
+//     Delete,
+//     PatchValue {
+//         old: Option<String>,
+//         new: Option<String>,
+//     },
+// }
+
+trait RenderPatch {
+    fn render(&self, name: &str, indent: usize);
+}
+
+impl RenderPatch for StringPatch {
+    fn render(&self, name: &str, indent: usize) {
+        println!(
+            "{:indent$}{}: {:?} -> {:?}",
+            "",
+            name,
+            self.old.red(),
+            self.new.green(),
+            indent = indent
+        );
+    }
+}
+
+impl RenderPatch for OptionalStringPatch {
+    fn render(&self, name: &str, indent: usize) {
+        println!(
+            "{:indent$}{}: {:?} -> {:?}",
+            "",
+            name,
+            self.old,
+            self.new,
+            indent = indent
+        );
+    }
+}
+
+impl RenderPatch for ChallengeAttachmentsPatch {
+    fn render(&self, name: &str, indent: usize) {
+        println!(
+            "{:indent$}{}: {:?} -> {:?}",
+            "",
+            name,
+            self.old,
+            self.new,
+            indent = indent
+        );
+    }
+}
+impl RenderPatch for ChallengePatch {
+    fn render(&self, name: &str, indent: usize) {
+        println!("{:indent$}{:?}:", "", name, indent = indent);
+        if let Some(p) = &self.name {
+            p.render("name", indent + 2);
+        }
+        if let Some(p) = &self.description {
+            p.render("description", indent + 2);
+        }
+        if let Some(p) = &self.category {
+            p.render("category", indent + 2);
+        }
+        if let Some(p) = &self.author {
+            p.render("author", indent + 2);
+        }
+        if let Some(p) = &self.ticket_template {
+            p.render("ticket_template", indent + 2);
+        }
+        if let Some(p) = &self.files {
+            p.render("files", indent + 2);
+        }
+        if let Some(p) = &self.flag {
+            p.render("flag", indent + 2);
+        }
+        if let Some(p) = &self.healthscript {
+            p.render("healthscript", indent + 2);
+        }
+    }
+}
+
+fn print_diff(patch: &ChallengeDataPatch) {
+    // let challenges: HashMap<String, DiffElement> = HashMap::new();
+
+    let actions = patch.actions.iter().filter_map(|x| x.action.as_ref());
+
+    for action in actions {
+        match action {
+            Action::PatchChallenge(patch_challenge) => {
+                if let Some(patch) = &patch_challenge.patch {
+                    patch.render(&patch_challenge.id, 2);
+                }
+            }
+            Action::DeleteChallenge(delete_challenge) => todo!(),
+            Action::CreateChallenge(create_challenge) => todo!(),
+            Action::PatchAuthor(patch_author) => todo!(),
+            Action::DeleteAuthor(delete_author) => todo!(),
+            Action::CreateAuthor(create_author) => todo!(),
+            Action::PatchCategory(patch_category) => todo!(),
+            Action::DeleteCategory(delete_category) => todo!(),
+            Action::CreateCategory(create_category) => todo!(),
+        }
+    }
 }
