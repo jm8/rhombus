@@ -111,18 +111,18 @@ impl Rhombus for MyGreeter {
     ) -> Result<tonic::Response<ChallengeDataPatch>, Status> {
         let new = request.into_inner();
         let old = self.get_challenges_from_db().await?;
-        let reply = diff_challenge_data(&new, &old);
+        let reply = diff_challenge_data(&old, &new);
         Ok(Response::new(reply))
     }
 }
-pub fn diff_challenge_data(current: &ChallengeData, other: &ChallengeData) -> ChallengeDataPatch {
+pub fn diff_challenge_data(old: &ChallengeData, new: &ChallengeData) -> ChallengeDataPatch {
     let mut patch = ChallengeDataPatch { actions: vec![] };
 
-    for (id, challenge) in &current.challenges {
-        match other.challenges.get(id) {
-            Some(other_challenge) => {
-                if challenge != other_challenge {
-                    let challenge_patch = diff_challenge(challenge, other_challenge);
+    for (id, challenge) in &old.challenges {
+        match new.challenges.get(id) {
+            Some(new_challenge) => {
+                if challenge != new_challenge {
+                    let challenge_patch = diff_challenge(challenge, new_challenge);
                     patch.actions.push(ChallengeDataPatchAction {
                         action: Some(challenge_data_patch_action::Action::PatchChallenge(
                             PatchChallenge {
@@ -143,8 +143,8 @@ pub fn diff_challenge_data(current: &ChallengeData, other: &ChallengeData) -> Ch
         }
     }
 
-    for (id, challenge) in &other.challenges {
-        if !current.challenges.contains_key(id) {
+    for (id, challenge) in &new.challenges {
+        if !old.challenges.contains_key(id) {
             patch.actions.push(ChallengeDataPatchAction {
                 action: Some(challenge_data_patch_action::Action::CreateChallenge(
                     CreateChallenge {
@@ -156,11 +156,11 @@ pub fn diff_challenge_data(current: &ChallengeData, other: &ChallengeData) -> Ch
         }
     }
 
-    for (id, author) in &current.authors {
-        match other.authors.get(id) {
-            Some(other_author) => {
-                if author != other_author {
-                    let author_patch = diff_author(author, other_author);
+    for (id, author) in &old.authors {
+        match new.authors.get(id) {
+            Some(new_author) => {
+                if author != new_author {
+                    let author_patch = diff_author(author, new_author);
                     patch.actions.push(ChallengeDataPatchAction {
                         action: Some(challenge_data_patch_action::Action::PatchAuthor(
                             PatchAuthor {
@@ -181,8 +181,8 @@ pub fn diff_challenge_data(current: &ChallengeData, other: &ChallengeData) -> Ch
         }
     }
 
-    for (id, author) in &other.authors {
-        if !current.authors.contains_key(id) {
+    for (id, author) in &new.authors {
+        if !old.authors.contains_key(id) {
             patch.actions.push(ChallengeDataPatchAction {
                 action: Some(challenge_data_patch_action::Action::CreateAuthor(
                     CreateAuthor {
@@ -194,11 +194,11 @@ pub fn diff_challenge_data(current: &ChallengeData, other: &ChallengeData) -> Ch
         }
     }
 
-    for (id, category) in &current.categories {
-        match other.categories.get(id) {
-            Some(other_category) => {
-                if category != other_category {
-                    let category_patch = diff_category(category, other_category);
+    for (id, category) in &old.categories {
+        match new.categories.get(id) {
+            Some(new_category) => {
+                if category != new_category {
+                    let category_patch = diff_category(category, new_category);
                     patch.actions.push(ChallengeDataPatchAction {
                         action: Some(challenge_data_patch_action::Action::PatchCategory(
                             PatchCategory {
@@ -219,8 +219,8 @@ pub fn diff_challenge_data(current: &ChallengeData, other: &ChallengeData) -> Ch
         }
     }
 
-    for (id, category) in &other.categories {
-        if !current.categories.contains_key(id) {
+    for (id, category) in &new.categories {
+        if !old.categories.contains_key(id) {
             patch.actions.push(ChallengeDataPatchAction {
                 action: Some(challenge_data_patch_action::Action::CreateCategory(
                     CreateCategory {
@@ -235,99 +235,99 @@ pub fn diff_challenge_data(current: &ChallengeData, other: &ChallengeData) -> Ch
     patch
 }
 
-pub fn diff_challenge(current: &Challenge, other: &Challenge) -> ChallengePatch {
+pub fn diff_challenge(old: &Challenge, new: &Challenge) -> ChallengePatch {
     let mut patch = ChallengePatch::default();
 
-    if current.name != other.name {
+    if old.name != new.name {
         patch.name = Some(StringPatch {
-            old: current.name.clone(),
-            new: other.name.clone(),
+            old: old.name.clone(),
+            new: new.name.clone(),
         });
     }
-    if current.description != other.description {
+    if old.description != new.description {
         patch.description = Some(StringPatch {
-            old: current.description.clone(),
-            new: other.description.clone(),
+            old: old.description.clone(),
+            new: new.description.clone(),
         });
     }
-    if current.category != other.category {
+    if old.category != new.category {
         patch.category = Some(StringPatch {
-            old: current.category.clone(),
-            new: other.category.clone(),
+            old: old.category.clone(),
+            new: new.category.clone(),
         });
     }
-    if current.author != other.author {
+    if old.author != new.author {
         patch.author = Some(StringPatch {
-            old: current.author.clone(),
-            new: other.author.clone(),
+            old: old.author.clone(),
+            new: new.author.clone(),
         });
     }
-    if current.ticket_template != other.ticket_template {
+    if old.ticket_template != new.ticket_template {
         patch.ticket_template = Some(OptionalStringPatch {
-            old: current.ticket_template.clone(),
-            new: other.ticket_template.clone(),
+            old: old.ticket_template.clone(),
+            new: new.ticket_template.clone(),
         });
     }
-    if current.files != other.files {
+    if old.files != new.files {
         patch.files = Some(ChallengeAttachmentsPatch {
-            old: current.files.clone(),
-            new: other.files.clone(),
+            old: old.files.clone(),
+            new: new.files.clone(),
         });
     }
-    if current.flag != other.flag {
+    if old.flag != new.flag {
         patch.flag = Some(StringPatch {
-            old: current.flag.clone(),
-            new: other.flag.clone(),
+            old: old.flag.clone(),
+            new: new.flag.clone(),
         });
     }
-    if current.healthscript != other.healthscript {
+    if old.healthscript != new.healthscript {
         patch.healthscript = Some(OptionalStringPatch {
-            old: current.healthscript.clone(),
-            new: other.healthscript.clone(),
+            old: old.healthscript.clone(),
+            new: new.healthscript.clone(),
         });
     }
 
     patch
 }
 
-pub fn diff_author(current: &Author, other: &Author) -> AuthorPatch {
+pub fn diff_author(old: &Author, new: &Author) -> AuthorPatch {
     let mut patch = AuthorPatch::default();
 
-    if current.name != other.name {
+    if old.name != new.name {
         patch.name = Some(StringPatch {
-            old: current.name.clone(),
-            new: other.name.clone(),
+            old: old.name.clone(),
+            new: new.name.clone(),
         });
     }
-    if current.avatar_url != other.avatar_url {
+    if old.avatar_url != new.avatar_url {
         patch.avatar_url = Some(StringPatch {
-            old: current.avatar_url.clone(),
-            new: other.avatar_url.clone(),
+            old: old.avatar_url.clone(),
+            new: new.avatar_url.clone(),
         });
     }
-    if current.discord_id != other.discord_id {
+    if old.discord_id != new.discord_id {
         patch.discord_id = Some(StringPatch {
-            old: current.discord_id.clone(),
-            new: other.discord_id.clone(),
+            old: old.discord_id.clone(),
+            new: new.discord_id.clone(),
         });
     }
 
     patch
 }
 
-pub fn diff_category(current: &Category, other: &Category) -> CategoryPatch {
+pub fn diff_category(old: &Category, new: &Category) -> CategoryPatch {
     let mut patch = CategoryPatch::default();
 
-    if current.name != other.name {
+    if old.name != new.name {
         patch.name = Some(StringPatch {
-            old: current.name.clone(),
-            new: other.name.clone(),
+            old: old.name.clone(),
+            new: new.name.clone(),
         });
     }
-    if current.color != other.color {
+    if old.color != new.color {
         patch.color = Some(StringPatch {
-            old: current.color.clone(),
-            new: other.color.clone(),
+            old: old.color.clone(),
+            new: new.color.clone(),
         });
     }
 

@@ -4,9 +4,10 @@ use figment::{
     providers::{Format, Yaml},
     Figment,
 };
-use grpc::proto::{rhombus_client::RhombusClient, HelloRequest};
+use grpc::proto::{rhombus_client::RhombusClient, Challenge, ChallengeData, HelloRequest};
 use serde::{Deserialize, Serialize};
 use std::{
+    collections::HashMap,
     fs::{self, ReadDir},
     path::{Path, PathBuf},
 };
@@ -14,6 +15,7 @@ use std::{
 mod grpc {
     pub mod proto {
         tonic::include_proto!("rhombus");
+        // include!("./rhombus.rs");
     }
 }
 
@@ -136,7 +138,6 @@ async fn main() -> Result<()> {
     let config: LoaderYaml = Figment::new()
         .merge(Yaml::file_exact("loader.yaml"))
         .extract()?;
-    println!("{:#?}", config);
 
     let challenge_yamls = ChallengeYamlWalker::new(&PathBuf::from("."))
         .into_iter()
@@ -147,7 +148,35 @@ async fn main() -> Result<()> {
                 .with_context(|| format!("failed to load {}", p.display()))
         })
         .collect::<Result<Vec<_>>>()?;
-    println!("{:#?}", challenge_yamls);
+
+    // let challenge_data = todo!();
+
+    let x = client
+        .diff_challenges(tonic::Request::new(ChallengeData {
+            challenges: challenge_yamls
+                .iter()
+                .map(|chal| {
+                    (
+                        chal.stable_id.clone(),
+                        Challenge {
+                            name: chal.name.clone().unwrap_or_else(|| chal.stable_id.clone()),
+                            description: chal.description.clone(),
+                            category: chal.category.clone(),
+                            author: chal.author.clone(),
+                            ticket_template: chal.ticket_template.clone(),
+                            files: vec![],
+                            flag: chal.flag.clone(),
+                            healthscript: chal.healthscript.clone(),
+                        },
+                    )
+                })
+                .collect(),
+            categories: HashMap::new(),
+            authors: HashMap::new(),
+        }))
+        .await?;
+
+    println!("{:#?}", x);
 
     Ok(())
 }
