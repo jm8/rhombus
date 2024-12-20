@@ -154,6 +154,13 @@ impl Database for Postgres {
         todo!()
     }
 
+    async fn update_challenges(
+        &self,
+        _patch: &crate::grpc::proto::ChallengeDataPatch,
+    ) -> Result<()> {
+        todo!()
+    }
+
     async fn set_challenge_health(
         &self,
         _challenge_id: &str,

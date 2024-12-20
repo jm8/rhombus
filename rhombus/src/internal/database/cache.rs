@@ -144,6 +144,13 @@ impl Database for DbCache {
         get_challenges(&self.inner).await
     }
 
+    async fn update_challenges(
+        &self,
+        patch: &crate::grpc::proto::ChallengeDataPatch,
+    ) -> Result<()> {
+        self.inner.update_challenges(patch).await
+    }
+
     async fn set_challenge_health(
         &self,
         challenge_id: &str,

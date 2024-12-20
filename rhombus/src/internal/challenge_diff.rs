@@ -1,8 +1,8 @@
 use crate::grpc::proto::{
-    challenge_data_patch_action, Author, AuthorPatch, Category, CategoryPatch, Challenge, ChallengeAttachmentsPatch, ChallengeData, ChallengeDataPatch,
-    ChallengeDataPatchAction, ChallengePatch, CreateAuthor, CreateCategory, CreateChallenge,
-    DeleteAuthor, DeleteCategory, DeleteChallenge, OptionalStringPatch,
-    PatchAuthor, PatchCategory, PatchChallenge, StringPatch,
+    challenge_data_patch_action, Author, AuthorPatch, Category, CategoryPatch, Challenge,
+    ChallengeAttachmentsPatch, ChallengeData, ChallengeDataPatch, ChallengeDataPatchAction,
+    ChallengePatch, CreateAuthor, CreateCategory, CreateChallenge, DeleteAuthor, DeleteCategory,
+    DeleteChallenge, OptionalStringPatch, PatchAuthor, PatchCategory, PatchChallenge, StringPatch,
 };
 
 pub fn diff_challenge_data(old: &ChallengeData, new: &ChallengeData) -> ChallengeDataPatch {
