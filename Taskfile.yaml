@@ -56,3 +56,9 @@ tasks:
       WATCH: true
     cmds:
       - node build.mjs
+  
+  josh-temp-compile-protos:
+    dir: rhombus-cli
+    cmds:
+      - cp $(cargo out-dir)/rhombus.rs src/rhombus.rs
+      - cp src/rhombus.rs ../rhombus/src/rhombus.rs

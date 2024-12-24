@@ -5,9 +5,11 @@ use figment::{
     Figment,
 };
 use grpc::proto::{
-    rhombus_client::RhombusClient, Author, Category, Challenge, ChallengeData, HelloRequest,
+    rhombus_client::RhombusClient, Author, Category, Challenge, ChallengeAttachment, ChallengeData,
+    GetAttachmentByHashRequest, HelloRequest,
 };
 use serde::{Deserialize, Serialize};
+use std::fmt::Write as _;
 use std::{
     collections::HashMap,
     fs::{self, ReadDir},
@@ -137,7 +139,6 @@ async fn main() -> Result<()> {
         name: "Tonic".into(),
     });
     let response = client.say_hello(request).await?;
-    println!("{:?}", response);
 
     let config: LoaderYaml = Figment::new()
         .merge(Yaml::file_exact("loader.yaml"))
@@ -146,22 +147,45 @@ async fn main() -> Result<()> {
     let challenge_yamls = ChallengeYamlWalker::new(&PathBuf::from("."))
         .into_iter()
         .map(|p| {
-            let text = fs::read_to_string(p)?;
+            let text = fs::read_to_string(&p)?;
             let parsed = Figment::new()
                 .merge(Yaml::string(&text))
                 .extract::<ChallengeYaml>()?;
             let json = serde_json::to_string(&serde_yml::from_str::<serde_json::Value>(&text)?)?;
-            Ok((parsed, json))
+
+            Ok((p, parsed, json))
         })
         .collect::<Result<Vec<_>>>()?;
 
-    // let challenge_data = todo!();
+    let mut src_to_url: HashMap<PathBuf, String> = HashMap::new();
+
+    for (challenge_yaml_path, challenge_yaml, _metadata) in &challenge_yamls {
+        for file in &challenge_yaml.files {
+            match file {
+                ChallengeAttachmentYaml::Url { url: _, dst: _ } => continue,
+                ChallengeAttachmentYaml::File { src, dst: _ } => {
+                    let file_path = challenge_yaml_path.parent().unwrap().join(src);
+                    let data = fs::read(file_path.as_path())?;
+                    let digest = ring::digest::digest(&ring::digest::SHA256, &data);
+                    let hash = slice_to_hex_string(digest.as_ref());
+                    let url = client
+                        .get_attachment_by_hash(tonic::Request::new(GetAttachmentByHashRequest {
+                            hash: hash.clone(),
+                        }))
+                        .await?
+                        .into_inner()
+                        .url;
+                    src_to_url.insert(file_path, url.expect("uploading isn't implemented"));
+                }
+            }
+        }
+    }
 
     let x = client
         .diff_challenges(tonic::Request::new(ChallengeData {
             challenges: challenge_yamls
                 .iter()
-                .map(|(chal, metadata)| -> Result<(String, Challenge)> {
+                .map(|(p, chal, metadata)| -> Result<(String, Challenge)> {
                     Ok((
                         chal.stable_id.clone(),
                         Challenge {
@@ -183,7 +207,27 @@ async fn main() -> Result<()> {
                             category: chal.category.clone(),
                             author: chal.author.clone(),
                             ticket_template: chal.ticket_template.clone(),
-                            files: vec![],
+                            files: chal
+                                .files
+                                .iter()
+                                .map(|file| match file {
+                                    ChallengeAttachmentYaml::Url { url, dst } => {
+                                        ChallengeAttachment {
+                                            name: dst.clone(),
+                                            url: url.clone(),
+                                        }
+                                    }
+                                    ChallengeAttachmentYaml::File { src, dst } => {
+                                        ChallengeAttachment {
+                                            name: dst.clone(),
+                                            url: src_to_url
+                                                .get(&p.parent().unwrap().join(&src))
+                                                .unwrap()
+                                                .clone(),
+                                        }
+                                    }
+                                })
+                                .collect(),
                             flag: chal.flag.clone(),
                             healthscript: chal.healthscript.clone(),
                             points: chal.points,
@@ -233,4 +277,11 @@ async fn main() -> Result<()> {
     println!("{:#?}", x);
 
     Ok(())
+}
+
+fn slice_to_hex_string(slice: &[u8]) -> String {
+    slice.iter().fold(String::new(), |mut output, b| {
+        let _ = write!(output, "{b:02x}");
+        output
+    })
 }

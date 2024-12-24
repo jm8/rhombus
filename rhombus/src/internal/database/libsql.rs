@@ -823,9 +823,9 @@ impl<T: ?Sized + LibSQLConnection + Send + Sync> Database for T {
 
     async fn update_challenges(
         &self,
-        patch: &crate::grpc::proto::ChallengeDataPatch,
+        _patch: &crate::grpc::proto::ChallengeDataPatch,
     ) -> Result<()> {
-        let tx = self.transaction().await?;
+        let _tx = self.transaction().await?;
 
         //todo
 
@@ -2356,6 +2356,25 @@ impl<T: ?Sized + LibSQLConnection + Send + Sync> Database for T {
         let file = de::from_row::<DbFile>(&row).unwrap();
 
         Ok((Bytes::from(file.contents), file.filename))
+    }
+
+    async fn get_attachment_url_by_hash(&self, hash: &str) -> Result<Option<String>> {
+        Ok(self
+            .connect()
+            .await?
+            .query(
+                "
+                SELECT url
+                FROM rhombus_file_attachment
+                WHERE hash = ?1
+                LIMIT 1
+            ",
+                [hash],
+            )
+            .await?
+            .next()
+            .await?
+            .map(|row| row.get::<String>(0).unwrap()))
     }
 
     async fn get_site_statistics(&self) -> Result<SiteStatistics> {

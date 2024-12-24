@@ -407,6 +407,10 @@ impl Database for Postgres {
         todo!()
     }
 
+    async fn get_attachment_url_by_hash(&self, hash: &str) -> Result<Option<String>> {
+        todo!()
+    }
+
     async fn get_site_statistics(&self) -> Result<SiteStatistics> {
         todo!()
     }

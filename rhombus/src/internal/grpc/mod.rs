@@ -1,7 +1,7 @@
 use crate::grpc::proto::rhombus_server::{Rhombus, RhombusServer};
 use crate::grpc::proto::{
     self, Author, Category, Challenge, ChallengeAttachment, ChallengeData, ChallengeDataPatch,
-    HelloReply, HelloRequest,
+    GetAttachmentByHashRequest, GetAttachmentByHashResponse, HelloReply, HelloRequest,
 };
 use crate::internal::database::provider::Connection;
 use tonic::{transport::server::Router, transport::Server, Request, Response, Status};
@@ -96,19 +96,34 @@ impl Rhombus for MyGreeter {
 
     async fn get_challenges(
         &self,
-        _request: tonic::Request<()>,
-    ) -> Result<tonic::Response<ChallengeData>, Status> {
+        _request: Request<()>,
+    ) -> Result<Response<ChallengeData>, Status> {
         Ok(Response::new(self.get_challenges_from_db().await?))
     }
 
     async fn diff_challenges(
         &self,
-        request: tonic::Request<ChallengeData>,
-    ) -> Result<tonic::Response<ChallengeDataPatch>, Status> {
+        request: Request<ChallengeData>,
+    ) -> Result<Response<ChallengeDataPatch>, Status> {
         let new = request.into_inner();
         let old = self.get_challenges_from_db().await?;
         let reply = diff_challenge_data(&old, &new);
         Ok(Response::new(reply))
+    }
+
+    async fn get_attachment_by_hash(
+        &self,
+        request: Request<GetAttachmentByHashRequest>,
+    ) -> Result<Response<GetAttachmentByHashResponse>, Status> {
+        let hash = request.into_inner().hash;
+
+        let url = self
+            .db
+            .get_attachment_url_by_hash(&hash)
+            .await
+            .map_err(|_| Status::internal("failed to lookup attachment"))?;
+
+        Ok(Response::new(GetAttachmentByHashResponse { url }))
     }
 }
 

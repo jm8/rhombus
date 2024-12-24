@@ -7,6 +7,15 @@ service Rhombus {
     rpc GetChallenges (google.protobuf.Empty) returns (ChallengeData);
     // Diff the provided challenge data with the current challenge data on the server
     rpc DiffChallenges (ChallengeData) returns (ChallengeDataPatch);
+    rpc GetAttachmentByHash (GetAttachmentByHashRequest) returns (GetAttachmentByHashResponse);
+}
+
+message GetAttachmentByHashRequest {
+    string hash = 1;   
+}
+
+message GetAttachmentByHashResponse {
+    optional string url = 1;   
 }
 
 message HelloRequest {

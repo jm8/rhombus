@@ -374,6 +374,7 @@ pub trait Database {
     ) -> Result<Option<TeamStanding>>;
     async fn upload_file(&self, hash: &str, filename: &str, bytes: &[u8]) -> Result<()>;
     async fn download_file(&self, hash: &str) -> Result<(Bytes, String)>;
+    async fn get_attachment_url_by_hash(&self, hash: &str) -> Result<Option<String>>;
     async fn get_site_statistics(&self) -> Result<SiteStatistics>;
     async fn get_last_created_ticket_time(&self, user_id: i64) -> Result<Option<DateTime<Utc>>>;
 }

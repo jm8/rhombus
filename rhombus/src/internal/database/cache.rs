@@ -589,6 +589,10 @@ impl Database for DbCache {
         self.inner.download_file(hash).await
     }
 
+    async fn get_attachment_url_by_hash(&self, hash: &str) -> Result<Option<String>> {
+        self.inner.get_attachment_url_by_hash(hash).await
+    }
+
     async fn get_site_statistics(&self) -> Result<SiteStatistics> {
         self.inner.get_site_statistics().await
     }
