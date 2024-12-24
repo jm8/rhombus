@@ -1,10 +1,12 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Result};
 use clap::{Parser, Subcommand};
 use figment::{
     providers::{Format, Yaml},
     Figment,
 };
-use grpc::proto::{rhombus_client::RhombusClient, Challenge, ChallengeData, HelloRequest};
+use grpc::proto::{
+    rhombus_client::RhombusClient, Author, Category, Challenge, ChallengeData, HelloRequest,
+};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -78,6 +80,8 @@ struct ChallengeYaml {
     pub healthscript: Option<String>,
     pub name: Option<String>,
     pub ticket_template: Option<String>,
+    pub points: Option<i64>,
+    pub score_type: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -142,10 +146,12 @@ async fn main() -> Result<()> {
     let challenge_yamls = ChallengeYamlWalker::new(&PathBuf::from("."))
         .into_iter()
         .map(|p| {
-            Figment::new()
-                .merge(Yaml::file_exact(&p))
-                .extract::<ChallengeYaml>()
-                .with_context(|| format!("failed to load {}", p.display()))
+            let text = fs::read_to_string(p)?;
+            let parsed = Figment::new()
+                .merge(Yaml::string(&text))
+                .extract::<ChallengeYaml>()?;
+            let json = serde_json::to_string(&serde_yml::from_str::<serde_json::Value>(&text)?)?;
+            Ok((parsed, json))
         })
         .collect::<Result<Vec<_>>>()?;
 
@@ -155,24 +161,71 @@ async fn main() -> Result<()> {
         .diff_challenges(tonic::Request::new(ChallengeData {
             challenges: challenge_yamls
                 .iter()
-                .map(|chal| {
-                    (
+                .map(|(chal, metadata)| -> Result<(String, Challenge)> {
+                    Ok((
                         chal.stable_id.clone(),
                         Challenge {
                             name: chal.name.clone().unwrap_or_else(|| chal.stable_id.clone()),
-                            description: chal.description.clone(),
+                            description: markdown::to_html_with_options(
+                                &chal.description,
+                                &markdown::Options {
+                                    compile: markdown::CompileOptions {
+                                        allow_dangerous_html: true,
+                                        allow_dangerous_protocol: true,
+                                        ..markdown::CompileOptions::default()
+                                    },
+                                    ..markdown::Options::default()
+                                },
+                            )
+                            .map_err(|err| {
+                                anyhow!("failed to convert markdown in {}: {}", chal.stable_id, err)
+                            })?,
                             category: chal.category.clone(),
                             author: chal.author.clone(),
                             ticket_template: chal.ticket_template.clone(),
                             files: vec![],
                             flag: chal.flag.clone(),
                             healthscript: chal.healthscript.clone(),
+                            points: chal.points,
+                            metadata: Some(metadata.clone()),
+                            score_type: chal.score_type.clone(),
+                        },
+                    ))
+                })
+                .collect::<Result<HashMap<String, Challenge>>>()?,
+            authors: config
+                .authors
+                .iter()
+                .map(|author| {
+                    (
+                        author.stable_id.clone(),
+                        Author {
+                            name: author
+                                .name
+                                .clone()
+                                .unwrap_or_else(|| author.stable_id.clone()),
+                            avatar_url: author.avatar.clone(),
+                            discord_id: author.discord_id.to_string(),
                         },
                     )
                 })
                 .collect(),
-            categories: HashMap::new(),
-            authors: HashMap::new(),
+            categories: config
+                .categories
+                .iter()
+                .map(|category| {
+                    (
+                        category.stable_id.clone(),
+                        Category {
+                            name: category
+                                .name
+                                .clone()
+                                .unwrap_or_else(|| category.stable_id.clone()),
+                            color: category.color.clone(),
+                        },
+                    )
+                })
+                .collect(),
         }))
         .await?
         .into_inner();

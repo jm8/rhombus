@@ -11,7 +11,7 @@ tasks:
     desc: Cargo run the standalone
     dir: examples/standalone
     cmds:
-      - mold -run cargo run -p standalone
+      - mold -run cargo run -vv -p standalone
 
   apply-standalone:
     desc: Run rhombus-cli admin apply from examples/standalone/challenges

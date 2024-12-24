@@ -23,66 +23,6 @@ message ChallengeData {
     map<string, Author> authors = 3;
 }
 
-message ChallengeDataPatch {
-    repeated ChallengeDataPatchAction actions = 1;
-}
-
-message ChallengeDataPatchAction {
-    oneof action {
-        PatchChallenge patch_challenge = 1;
-        DeleteChallenge delete_challenge = 2;
-        CreateChallenge create_challenge = 3;
-        PatchAuthor patch_author = 4;
-        DeleteAuthor delete_author = 5;
-        CreateAuthor create_author = 6;
-        PatchCategory patch_category = 7;
-        DeleteCategory delete_category = 8;
-        CreateCategory create_category = 9;
-    }
-}
-
-message PatchChallenge {
-    string id = 1;
-    ChallengePatch patch = 2;
-}
-
-message DeleteChallenge {
-    string id = 1;
-}
-
-message CreateChallenge {
-    string id = 1;
-    Challenge value = 2;
-}
-
-message PatchAuthor {
-    string id = 1;
-    AuthorPatch patch = 2;
-}
-
-message DeleteAuthor {
-    string id = 1;
-}
-
-message CreateAuthor {
-    string id = 1;
-    Author value = 2;
-}
-
-message PatchCategory {
-    string id = 1;
-    CategoryPatch patch = 2;
-}
-
-message DeleteCategory {
-    string id = 1;
-}
-
-message CreateCategory {
-    string id = 1;
-    Category value = 2;
-}
-
 message Challenge {
     string name = 1;
     string description = 2;
@@ -92,6 +32,9 @@ message Challenge {
     repeated ChallengeAttachment files = 6;
     string flag = 7;
     optional string healthscript = 8;
+    optional string score_type = 9;
+    optional string metadata = 10;
+    optional int64 points = 11; 
 }
 
 message ChallengeAttachment {
@@ -99,25 +42,9 @@ message ChallengeAttachment {
     string url = 2;
 }
 
-message ChallengePatch {
-    optional StringPatch name = 1;
-    optional StringPatch description = 2;
-    optional StringPatch category = 3;
-    optional StringPatch author = 4;
-    optional OptionalStringPatch ticket_template = 5;
-    optional ChallengeAttachmentsPatch files = 6;
-    optional StringPatch flag = 7;
-    optional OptionalStringPatch healthscript = 8;
-}
-
 message Category {
     string name = 1;
     string color = 2;
-}
-
-message CategoryPatch {
-    optional StringPatch name = 1;
-    optional StringPatch color = 2;
 }
 
 message Author {
@@ -126,23 +53,23 @@ message Author {
     string discord_id = 3;
 }
 
+message ChallengeDataPatch {
+    map<string, ChallengePatch> challenges = 1;
+    map<string, CategoryPatch> categories = 2;
+    map<string, AuthorPatch> authors = 3;
+}
+
+message ChallengePatch {
+    optional Challenge old = 1;
+    optional Challenge new = 2;
+}
+
+message CategoryPatch {
+    optional Category old = 1;
+    optional Category new = 2;
+}
+
 message AuthorPatch {
-    optional StringPatch name = 1;
-    optional StringPatch avatar_url = 2;
-    optional StringPatch discord_id = 3;
-}
-
-message ChallengeAttachmentsPatch {
-    repeated ChallengeAttachment old = 1;
-    repeated ChallengeAttachment new = 2;
-}
-
-message StringPatch {
-    string old = 1;
-    string new = 2;
-}
-
-message OptionalStringPatch {
-    optional string old = 1;
-    optional string new = 2;
+    optional Author old = 1;
+    optional Author new = 2;
 }

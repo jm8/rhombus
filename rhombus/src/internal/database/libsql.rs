@@ -21,10 +21,6 @@ use tokio_util::bytes::Bytes;
 
 use crate::{
     errors::RhombusError,
-    grpc::{
-        proto::{challenge_data_patch_action::Action, PatchChallenge},
-        ChallengeDataPatchExt as _,
-    },
     internal::{
         auth::{User, UserInner},
         database::{
@@ -831,30 +827,7 @@ impl<T: ?Sized + LibSQLConnection + Send + Sync> Database for T {
     ) -> Result<()> {
         let tx = self.transaction().await?;
 
-        for (id, challenge) in patch.create_challenges() {
-            tx.execute("
-                INSERT INTO rhombus_challenge (id, name, description, flag, category_id, author_id, ticket_template, healthscript, score_type, points, metadata)
-                VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
-            ",
-                params!(
-                    id,
-                    challenge.name.as_str(),
-                    challenge.description.as_str(),
-                    challenge.flag.as_str(),
-                    challenge.category.as_str(),
-                    challenge.author.as_str(),
-                    challenge.ticket_template.as_deref().unwrap_or_default(),
-                    challenge.healthscript.as_deref(),
-                    // TODO: JOSH: SCORE_TYPE
-                    "dynamic",
-                    // challenge.score_type.as_str(),
-                    // TODO: JOSH: POINTS
-                    0,
-                    // TODO: JOSH: METADATA
-                    "",
-                ),
-            ).await?;
-        }
+        //todo
 
         Ok(())
     }

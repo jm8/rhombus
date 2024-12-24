@@ -1,7 +1,7 @@
 use crate::grpc::proto::rhombus_server::{Rhombus, RhombusServer};
 use crate::grpc::proto::{
-    self, Author, Category, Challenge,
-    ChallengeAttachment, ChallengeData, ChallengeDataPatch, HelloReply, HelloRequest,
+    self, Author, Category, Challenge, ChallengeAttachment, ChallengeData, ChallengeDataPatch,
+    HelloReply, HelloRequest,
 };
 use crate::internal::database::provider::Connection;
 use tonic::{transport::server::Router, transport::Server, Request, Response, Status};
@@ -43,6 +43,9 @@ impl MyGreeter {
                                 .collect(),
                             flag: v.flag.clone(),
                             healthscript: v.healthscript.clone(),
+                            metadata: serde_json::to_string(&v.metadata).ok(),
+                            points: Some(v.points),
+                            score_type: Some(v.score_type.clone()),
                         },
                     )
                 })
