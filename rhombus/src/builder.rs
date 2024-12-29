@@ -393,8 +393,8 @@ impl Builder {
     pub(crate) async fn build_axum_router(
         self,
         rr: Arc<crate::internal::router::Router>,
-    ) -> std::result::Result<(Connection, axum::Router), RhombusError> {
-        let (self_rc, router, cached_db) = {
+    ) -> std::result::Result<(Connection, axum::Router, Option<String>), RhombusError> {
+        let (self_rc, router, cached_db, settings) = {
             let self_rc = Rc::new(self);
 
             let mut settings: Settings = self_rc
@@ -1089,24 +1089,25 @@ impl Builder {
 
             let router = router.layer(CompressionLayer::new());
 
-            (self_rc, router, cached_db)
+            (self_rc, router, cached_db, settings)
         };
 
         let builder = Rc::try_unwrap(self_rc).unwrap();
         let builder = Arc::new(Mutex::new(Some(builder)));
         let router = router.layer(Extension(builder));
 
-        Ok((cached_db, router))
+        let grpc_psk = settings.read().await.grpc_psk.clone();
+        Ok((cached_db, router, grpc_psk))
     }
 
     pub async fn build(self) -> Result<RhombusApp> {
         let web = Arc::new(crate::internal::router::Router::new());
 
-        let (db, router) = self.build_axum_router(web.clone()).await?;
+        let (db, router, grpc_psk) = self.build_axum_router(web.clone()).await?;
 
         web.update(router);
 
-        let grpc = grpc::make_server(db);
+        let grpc = grpc::make_server(db, grpc_psk);
 
         Ok(RhombusApp { web, grpc })
     }

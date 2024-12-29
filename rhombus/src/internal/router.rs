@@ -135,7 +135,7 @@ pub fn rebuild_router(builder: crate::Builder, rr: Arc<crate::internal::router::
             tokio::task::spawn_local(async move {
                 // JOSH: FIXME BEFORE MAKING PR: This needs to somehow update the grpc with the
                 // new database
-                let (_, router) = builder.build_axum_router(rr.clone()).await.unwrap();
+                let (_, router, _) = builder.build_axum_router(rr.clone()).await.unwrap();
                 rr.update(router);
             })
             .await

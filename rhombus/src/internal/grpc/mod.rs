@@ -10,6 +10,7 @@ use super::challenge_diff::diff_challenge_data;
 
 pub struct MyGreeter {
     db: Connection,
+    grpc_psk: Option<String>,
 }
 
 impl MyGreeter {
@@ -79,6 +80,15 @@ impl MyGreeter {
                 .collect(),
         })
     }
+
+    pub fn require_admin<T>(&self, req: Request<T>) -> Result<T, Status> {
+        let (metadata, _, inner) = req.into_parts();
+        let Some(authorization) = metadata.get("authorization") else {
+            return Err(Status::unauthenticated("missing authorization header"));
+        };
+        eprintln!("AUTHORIZATION == {:?}", authorization);
+        Ok(inner)
+    }
 }
 
 #[tonic::async_trait]
@@ -96,8 +106,9 @@ impl Rhombus for MyGreeter {
 
     async fn get_challenges(
         &self,
-        _request: Request<()>,
+        request: Request<()>,
     ) -> Result<Response<ChallengeData>, Status> {
+        self.require_admin(request)?;
         Ok(Response::new(self.get_challenges_from_db().await?))
     }
 
@@ -105,7 +116,7 @@ impl Rhombus for MyGreeter {
         &self,
         request: Request<ChallengeData>,
     ) -> Result<Response<ChallengeDataPatch>, Status> {
-        let new = request.into_inner();
+        let new = self.require_admin(request)?;
         let old = self.get_challenges_from_db().await?;
         let reply = diff_challenge_data(&old, &new);
         Ok(Response::new(reply))
@@ -115,7 +126,7 @@ impl Rhombus for MyGreeter {
         &self,
         request: Request<GetAttachmentByHashRequest>,
     ) -> Result<Response<GetAttachmentByHashResponse>, Status> {
-        let hash = request.into_inner().hash;
+        let hash = self.require_admin(request)?.hash;
 
         let url = self
             .db
@@ -127,8 +138,8 @@ impl Rhombus for MyGreeter {
     }
 }
 
-pub fn make_server(db: Connection) -> Router {
-    let rhombus = MyGreeter { db };
+pub fn make_server(db: Connection, grpc_psk: Option<String>) -> Router {
+    let rhombus = MyGreeter { db, grpc_psk };
     let reflection_service = tonic_reflection::server::Builder::configure()
         .register_encoded_file_descriptor_set(proto::FILE_DESCRIPTOR_SET)
         .build_v1()
