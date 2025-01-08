@@ -9,19 +9,23 @@ struct RhombusImpl {
     root_key: Option<String>,
 }
 
+pub fn get_api_key<T>(request: &tonic::Request<T>) -> Result<&str, tonic::Status> {
+    request
+        .metadata()
+        .get("authorization")
+        .and_then(|s| s.to_str().ok())
+        .map(|s| s.trim_start_matches("bearer "))
+        .map(|s| s.trim_start_matches("Bearer "))
+        .ok_or_else(|| tonic::Status::unauthenticated("Missing authorization header"))
+}
+
 #[tonic::async_trait]
 impl Rhombus for RhombusImpl {
     async fn whoami(
         &self,
         request: tonic::Request<proto::WhoamiRequest>,
-    ) -> std::result::Result<tonic::Response<WhoamiReply>, tonic::Status> {
-        let (metadata, _, _) = request.into_parts();
-        let key = metadata
-            .get("authorization")
-            .and_then(|s| s.to_str().ok())
-            .map(|s| s.trim_start_matches("bearer "))
-            .map(|s| s.trim_start_matches("Bearer "))
-            .ok_or_else(|| tonic::Status::unauthenticated("Missing authorization header"))?;
+    ) -> Result<tonic::Response<WhoamiReply>, tonic::Status> {
+        let key = get_api_key(&request)?;
 
         if self
             .root_key

@@ -1,6 +1,6 @@
 use rhombus::{
     axum::Router,
-    internal::{database::provider::Connection, router::RouterState},
+    internal::{database::provider::Connection, grpc::get_api_key, router::RouterState},
     plugin::{PluginMeta, RunContext},
     Plugin, Result,
 };
@@ -56,6 +56,7 @@ impl Plugin for MyPlugin {
             .grpc_builder
             .add_service(proto::my_plugin_server::MyPluginServer::new(GrpcImpl {
                 db: context.db.clone(),
+                root_api_key: context.settings.read().await.root_api_key.clone(),
             }))
             .register_encoded_file_descriptor_set(proto::FILE_DESCRIPTOR_SET);
 
@@ -65,6 +66,7 @@ impl Plugin for MyPlugin {
 
 pub struct GrpcImpl {
     pub db: Connection,
+    pub root_api_key: Option<String>,
 }
 
 #[async_trait]
@@ -73,7 +75,29 @@ impl proto::my_plugin_server::MyPlugin for GrpcImpl {
         &self,
         request: tonic::Request<proto::ReverseUserNameRequest>,
     ) -> std::result::Result<tonic::Response<proto::ReverseUserNameReply>, tonic::Status> {
+        let key = get_api_key(&request)?.to_owned();
+
         let user_id = request.into_inner().user_id;
+
+        let is_authorized = if self
+            .root_api_key
+            .as_ref()
+            .is_some_and(|root_api_key| &key == root_api_key)
+        {
+            true
+        } else {
+            self.db
+                .get_user_from_api_key(&key)
+                .await
+                .is_ok_and(|db_user| db_user.is_admin || db_user.id == user_id)
+        };
+
+        if !is_authorized {
+            return Err(tonic::Status::unauthenticated(
+                "Must be admin to reverse another user's name",
+            ));
+        }
+
         let user = self
             .db
             .get_user_from_id(user_id)
